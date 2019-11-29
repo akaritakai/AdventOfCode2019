@@ -99,7 +99,7 @@ public class PuzzleInputFetcher {
 
   @VisibleForTesting
   HttpUrl getRemotePuzzleInputUrl(int day) {
-    return HttpUrl.get("https://adventofcode.com/2018/day/" + day + "/input");
+    return HttpUrl.get("https://adventofcode.com/2019/day/" + day + "/input");
   }
 
   @VisibleForTesting

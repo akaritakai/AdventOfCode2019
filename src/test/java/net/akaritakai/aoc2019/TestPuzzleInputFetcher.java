@@ -97,7 +97,7 @@ public class TestPuzzleInputFetcher {
     var fetcher = new PuzzleInputFetcher();
     for (var day = 1; day <= 25; day++) {
       Assert.assertEquals(fetcher.getRemotePuzzleInputUrl(day),
-          HttpUrl.get("https://adventofcode.com/2018/day/" + day + "/input"));
+          HttpUrl.get("https://adventofcode.com/2019/day/" + day + "/input"));
     }
   }
 
