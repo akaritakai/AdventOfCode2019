@@ -25,11 +25,11 @@ public class Puzzle01 extends AbstractPuzzle {
     return String.valueOf(fuelRequirement);
   }
 
-  public int getFuelWeight(int payloadWeight) {
+  private int getFuelWeight(int payloadWeight) {
     return payloadWeight / 3 - 2;
   }
 
-  public int getRecursiveFuelWeight(int payloadWeight) {
+  private int getRecursiveFuelWeight(int payloadWeight) {
     var fuelWeight = getFuelWeight(payloadWeight);
     if (fuelWeight <= 0) {
       return 0;
