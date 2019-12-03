@@ -58,7 +58,7 @@ Day 2's input is at https://adventofcode.com/2019/day/2/input, etc.
 
 ## Linux Instructions
 
-1. Follow the instrcutions above for providing your puzzle input.
+1. Follow the instructions above for providing your puzzle input.
 2. Install JDK 13. You can follow the generic installation instructions [here](https://docs.oracle.com/en/java/javase/13/install/installation-jdk-linux-platforms.html).
    Alternatively, you may want to search on Google for installation instructions specific to your distro.
 3. Open a shell and navigate to the project directory.
