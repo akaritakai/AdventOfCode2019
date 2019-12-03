@@ -1,14 +1,16 @@
 package net.akaritakai.aoc2019;
 
-import com.google.common.collect.Sets;
-
-import java.awt.*;
-import java.util.*;
+import java.awt.Point;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Sets;
+
 public class Puzzle03 extends AbstractPuzzle {
-  private static final Point ORIGIN = new Point(0, 0);
 
   public Puzzle03(String puzzleInput) {
     super(puzzleInput);
@@ -21,7 +23,7 @@ public class Puzzle03 extends AbstractPuzzle {
 
   @Override
   public String solvePart1() {
-    Set<Point> intersections = getIntersections(getWires());
+    Set<Point> intersections = getAllIntersections(getWires());
     var minDistance = intersections.stream()
         .mapToInt(p -> Math.abs(p.x) + Math.abs(p.y))
         .min()
@@ -32,115 +34,70 @@ public class Puzzle03 extends AbstractPuzzle {
   @Override
   public String solvePart2() {
     var wires = getWires();
-    var minSteps = getIntersections(wires).stream()
-        .mapToInt(intersection -> wires.stream().mapToInt(wire -> numStepsToReachPoint(wire, intersection)).sum())
+    var minSteps = getAllIntersections(wires).stream()
+        .mapToInt(intersection -> wires.stream().mapToInt(wire -> wire.getWireLength(intersection)).sum())
         .min()
         .orElseThrow(() -> new IllegalArgumentException("No points available"));
     return String.valueOf(minSteps);
   }
 
-  private int numStepsToReachPoint(List<String> wireInstructions, Point point) {
-    var steps = 0;
-    var x = ORIGIN.x;
-    var y = ORIGIN.y;
-    for (String instruction : wireInstructions) {
-      var direction = instruction.substring(0, 1);
-      var length = Integer.parseInt(instruction.substring(1));
-      switch (direction) {
-        case "U" -> {
-          while (length-- > 0) {
-            steps++;
-            y++;
-            if (x == point.x && y == point.y) {
-              return steps;
-            }
-          }
-        }
-        case "D" -> {
-          while (length-- > 0) {
-            steps++;
-            y--;
-            if (x == point.x && y == point.y) {
-              return steps;
-            }
-          }
-        }
-        case "L" -> {
-          while (length-- > 0) {
-            steps++;
-            x--;
-            if (x == point.x && y == point.y) {
-              return steps;
-            }
-          }
-        }
-        case "R" -> {
-          while (length-- > 0) {
-            steps++;
-            x++;
-            if (x == point.x && y == point.y) {
-              return steps;
-            }
-          }
-        }
-      }
-    }
-    throw new IllegalStateException("Point not reachable on the wire");
+  private List<Wire> getWires() {
+    return getPuzzleInput().trim().lines().map(Wire::new).collect(Collectors.toList());
   }
 
-  private Set<Point> getIntersections(List<List<String>> wires) {
+  private Set<Point> getAllIntersections(List<Wire> wires) {
     Set<Point> intersections = new HashSet<>();
-    var wirePoints = wires.stream().map(this::getWirePoints).collect(Collectors.toList());
-    for (int i = 0; i < wires.size(); i++) {
-      for (int j = i + 1; j < wires.size(); j++) {
-        var wire1 = wirePoints.get(i);
-        var wire2 = wirePoints.get(j);
-        Sets.intersection(wire1, wire2)
-            .stream()
-            .filter(p -> !p.equals(ORIGIN))
-            .forEach(intersections::add);
+    for (var i = 0; i < wires.size(); i++) {
+      for (var j = i + 1; j < wires.size(); j++) {
+        var wire1 = wires.get(i);
+        var wire2 = wires.get(j);
+        intersections.addAll(wire1.getIntersections(wire2));
       }
     }
     return intersections;
   }
 
-  private Set<Point> getWirePoints(List<String> wire) {
-    Set<Point> points = new HashSet<>();
-    points.add(ORIGIN);
-    var x = ORIGIN.x;
-    var y = ORIGIN.y;
-    for (String instruction : wire) {
-      var direction = instruction.substring(0, 1);
-      var length = Integer.parseInt(instruction.substring(1));
-      switch (direction) {
-        case "U" -> {
-          while (length-- > 0) {
-            points.add(new Point(x, ++y));
+  private static class Wire {
+    private Map<Point, Integer> _pointLengthMap = new HashMap<>();
+
+    private Wire(String instructionString) {
+      var x = 0;
+      var y = 0;
+      var length = 0;
+      for (String instruction : instructionString.split(",")) {
+        var direction = instruction.substring(0, 1);
+        var distance = Integer.parseInt(instruction.substring(1));
+        switch (direction) {
+          case "U" -> {
+            while (distance-- > 0) {
+              _pointLengthMap.put(new Point(x, ++y), ++length);
+            }
           }
-        }
-        case "D" -> {
-          while (length-- > 0) {
-            points.add(new Point(x, --y));
+          case "D" -> {
+            while (distance-- > 0) {
+              _pointLengthMap.put(new Point(x, --y), ++length);
+            }
           }
-        }
-        case "L" -> {
-          while (length-- > 0) {
-            points.add(new Point(--x, y));
+          case "L" -> {
+            while (distance-- > 0) {
+              _pointLengthMap.put(new Point(--x, y), ++length);
+            }
           }
-        }
-        case "R" -> {
-          while (length-- > 0) {
-            points.add(new Point(++x, y));
+          case "R" -> {
+            while (distance-- > 0) {
+              _pointLengthMap.put(new Point(++x, y), ++length);
+            }
           }
         }
       }
     }
-    return points;
-  }
 
-  public List<List<String>> getWires() {
-    return getPuzzleInput().lines()
-        .map(line -> Arrays.stream(line.split(",")).collect(Collectors.toList()))
-        .collect(Collectors.toList());
+    private Set<Point> getIntersections(Wire other) {
+      return Sets.intersection(_pointLengthMap.keySet(), other._pointLengthMap.keySet());
+    }
+
+    private int getWireLength(Point point) {
+      return _pointLengthMap.getOrDefault(point, 0);
+    }
   }
 }
