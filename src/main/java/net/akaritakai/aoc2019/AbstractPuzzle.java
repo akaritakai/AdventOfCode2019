@@ -29,14 +29,14 @@ public abstract class AbstractPuzzle {
   public abstract int getDay();
 
     /**
-     * Returns the solution to part 1 of the problem.
-     * @return the solution to part 1 of the problem
+     * Returns the solution to part 1 of the puzzle.
+     * @return the solution to part 1 of the puzzle
      */
   public abstract String solvePart1();
 
     /**
-     * Returns the solution to part 2 of the problem.
-     * @return the solution to part 2 of the problem
+     * Returns the solution to part 2 of the puzzle.
+     * @return the solution to part 2 of the puzzle
      */
   public abstract String solvePart2();
 }
