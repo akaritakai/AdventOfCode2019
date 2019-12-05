@@ -1,11 +1,12 @@
 package net.akaritakai.aoc2019;
 
-import java.util.Map;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Ordering;
+
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import com.google.common.annotations.VisibleForTesting;
+import java.util.stream.Stream;
 
 
 public class Puzzle04 extends AbstractPuzzle {
@@ -33,23 +34,25 @@ public class Puzzle04 extends AbstractPuzzle {
 
   @VisibleForTesting
   static boolean meetsPart1Criteria(int n) {
-    return digitsMonotonicallyIncreasing(n) && digitCounts(n).values().stream().anyMatch(i -> i >= 2);
+    return digitsMonotonicallyIncreasing(n) && digitFrequencyCounts(n).anyMatch(i -> i >= 2);
   }
 
   @VisibleForTesting
   static boolean meetsPart2Criteria(int n) {
-    return digitsMonotonicallyIncreasing(n) && digitCounts(n).values().stream().anyMatch(i -> i == 2);
+    return digitsMonotonicallyIncreasing(n) && digitFrequencyCounts(n).anyMatch(i -> i == 2);
   }
 
   private static boolean digitsMonotonicallyIncreasing(int n) {
-    String s = String.valueOf(n);
-    String monotonic = s.chars().sorted().mapToObj(c -> String.valueOf((char) c)).collect(Collectors.joining());
-    return s.equals(monotonic);
+    Iterable<Integer> it = () -> digits(n).iterator();
+    return Ordering.natural().isOrdered(it);
   }
 
-  private static Map<Integer, Long> digitCounts(int n) {
-    return String.valueOf(n).chars().mapToObj(c -> c - '0')
-        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+  private static Stream<Long> digitFrequencyCounts(int n) {
+    return digits(n).collect(Collectors.groupingBy(Function.identity(), Collectors.counting())).values().stream();
+  }
+
+  private static Stream<Integer> digits(int n) {
+    return String.valueOf(n).chars().map(i -> i - '0').boxed();
   }
 
   private int getLowerBound() {
