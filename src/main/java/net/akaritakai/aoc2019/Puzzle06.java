@@ -29,7 +29,7 @@ public class Puzzle06 extends AbstractPuzzle {
   @Override
   public String solvePart2() {
     var youPath = pathToCenterOfMass("YOU");
-    var santaPath = pathToCenterOfMass( "SAN");
+    var santaPath = pathToCenterOfMass("SAN");
     var commonAncestor = youPath.stream()
         .filter(santaPath::contains)
         .findFirst()
