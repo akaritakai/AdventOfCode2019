@@ -6,7 +6,6 @@ import com.rainerhahnekamp.sneakythrow.functional.SneakyConsumer;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -29,7 +28,7 @@ public class Puzzle07 extends AbstractPuzzle {
   public String solvePart1() {
     var maxSignal = Collections2.permutations(List.of(0, 1, 2, 3, 4))
         .stream()
-        .mapToInt(this::runChainedAmplifiers)
+        .mapToInt(this::runAmplifiers)
         .max()
         .orElseThrow(() -> new IllegalStateException("No amplifier outputs returned"));
     return String.valueOf(maxSignal);
@@ -39,42 +38,17 @@ public class Puzzle07 extends AbstractPuzzle {
   public String solvePart2() {
     var maxSignal = Collections2.permutations(List.of(5, 6, 7, 8, 9))
         .stream()
-        .mapToInt(this::runChainedLoopedAmplifiers)
+        .mapToInt(this::runAmplifiers)
         .max()
         .orElseThrow(() -> new IllegalStateException("No amplifier outputs returned"));
     return String.valueOf(maxSignal);
   }
 
   /**
-   * Runs a set of amplifiers in series, applying the phase settings provided to each of them.
-   * Returns the output of the last amplifier.
-   */
-  int runChainedAmplifiers(List<Integer> phaseSettings) {
-    AtomicInteger input = new AtomicInteger(0);
-    IntStream.range(0, phaseSettings.size()).forEach(i -> {
-      var phaseSetting = phaseSettings.get(i);
-      var output = runAmplifier(phaseSetting, input.get());
-      input.set(output); // pass output to the next amplifier
-    });
-    return input.get();
-  }
-
-  /**
-   * Returns the output of an amplifier that accepts a phase setting and then a single input value.
-   */
-  int runAmplifier(int phaseSetting, int inputValue) {
-    var input = List.of(phaseSetting, inputValue).iterator();
-    var output = new AtomicInteger();
-    var vm = new IntcodeVm(getPuzzleInput(), input::next, output::set);
-    vm.run();
-    return output.get();
-  }
-
-  /**
    * Runs a set of amplifiers in a chained feedback loop, applying the phase settings provided to each of them.
    * Returns the last unused output of the last amplifier after all amplifiers halt.
    */
-  int runChainedLoopedAmplifiers(List<Integer> phaseSettings) {
+  int runAmplifiers(List<Integer> phaseSettings) {
     // Create the i/o streams
     var streams = Stream.generate((Supplier<LinkedBlockingQueue<Integer>>) LinkedBlockingQueue::new)
         .limit(phaseSettings.size())
@@ -85,7 +59,7 @@ public class Puzzle07 extends AbstractPuzzle {
           var phaseSetting = phaseSettings.get(i);
           var input = streams.get(i);
           var output = streams.get((i + 1) % phaseSettings.size());
-          return runLoopedAmplifier(phaseSetting, input, output);
+          return runAmplifier(phaseSetting, input, output);
         })
         .collect(Collectors.toList());
     streams.get(0).add(0); // send 0 to the first amplifier
@@ -97,7 +71,7 @@ public class Puzzle07 extends AbstractPuzzle {
    * Returns a thread for an amplifier that accepts a phase setting and an input stream. Amplifier outputs will be sent
    * to the output stream.
    */
-  Thread runLoopedAmplifier(int phaseSetting, BlockingQueue<Integer> inputStream, BlockingQueue<Integer> outputStream) {
+  Thread runAmplifier(int phaseSetting, BlockingQueue<Integer> inputStream, BlockingQueue<Integer> outputStream) {
     sneaked(() -> inputStream.put(phaseSetting)).run();  // enqueue the phaseSetting to the amplifier's input stream
     var thread = new Thread(() -> {
       var program = getPuzzleInput();
