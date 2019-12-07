@@ -31,7 +31,7 @@ public class Puzzle07 extends AbstractPuzzle {
         .stream()
         .mapToInt(this::runChainedAmplifiers)
         .max()
-        .orElseThrow(() -> new IllegalStateException("No program values returned"));
+        .orElseThrow(() -> new IllegalStateException("No amplifier outputs returned"));
     return String.valueOf(maxSignal);
   }
 
@@ -41,7 +41,7 @@ public class Puzzle07 extends AbstractPuzzle {
         .stream()
         .mapToInt(this::runChainedLoopedAmplifiers)
         .max()
-        .orElseThrow(() -> new IllegalStateException("No program values returned"));
+        .orElseThrow(() -> new IllegalStateException("No amplifier outputs returned"));
     return String.valueOf(max);
   }
 
@@ -51,7 +51,8 @@ public class Puzzle07 extends AbstractPuzzle {
    */
   int runChainedAmplifiers(List<Integer> phaseSettings) {
     AtomicInteger input = new AtomicInteger(0);
-    IntStream.range(0, phaseSettings.size()).forEach(i -> input.set(runAmplifier(phaseSettings.get(i), input.get())));
+    IntStream.range(0, phaseSettings.size())
+        .forEach(i -> input.set(runAmplifier(phaseSettings.get(i), input.get())));
     return input.get();
   }
 
@@ -61,7 +62,7 @@ public class Puzzle07 extends AbstractPuzzle {
   int runAmplifier(int phaseSetting, int inputValue) {
     var input = List.of(phaseSetting, inputValue).iterator();
     var output = new AtomicInteger();
-    IntcodeVm vm = new IntcodeVm(getPuzzleInput(), input::next, output::set);
+    var vm = new IntcodeVm(getPuzzleInput(), input::next, output::set);
     vm.run();
     return output.get();
   }
@@ -71,15 +72,22 @@ public class Puzzle07 extends AbstractPuzzle {
    * Returns the last unused output of the last amplifier after all amplifiers halt.
    */
   int runChainedLoopedAmplifiers(List<Integer> phaseSettings) {
-    var inputs = Stream.generate((Supplier<LinkedBlockingQueue<Integer>>) LinkedBlockingQueue::new)
+    // Create the i/o streams
+    var streams = Stream.generate((Supplier<LinkedBlockingQueue<Integer>>) LinkedBlockingQueue::new)
         .limit(phaseSettings.size())
         .collect(Collectors.toList());
+    // Create and start the amplifiers
     var vms = IntStream.range(0, phaseSettings.size())
-        .mapToObj(i -> runLoopedAmplifier(phaseSettings.get(i), inputs.get(i), inputs.get((i + 1) % phaseSettings.size())))
+        .mapToObj(i -> {
+          var phaseSetting = phaseSettings.get(i);
+          var input = streams.get(i);
+          var output = streams.get((i + 1) % phaseSettings.size());
+          return runLoopedAmplifier(phaseSetting, input, output);
+        })
         .collect(Collectors.toList());
-    inputs.get(0).add(0);
-    vms.forEach(sneaked((SneakyConsumer<Thread, Exception>) Thread::join));
-    return inputs.get(0).remove();
+    streams.get(0).add(0); // send 0 to the first amplifier
+    vms.forEach(sneaked((SneakyConsumer<Thread, Exception>) Thread::join)); // wait for the amplifiers to halt
+    return streams.get(0).remove();
   }
 
   /**
@@ -87,8 +95,14 @@ public class Puzzle07 extends AbstractPuzzle {
    * to the output stream.
    */
   Thread runLoopedAmplifier(int phaseSetting, BlockingQueue<Integer> inputStream, BlockingQueue<Integer> outputStream) {
-    sneaked(() -> inputStream.put(phaseSetting)).run();
-    var thread = new Thread(() -> new IntcodeVm(getPuzzleInput(), sneaked(inputStream::take), sneaked(outputStream::put)).run());
+    sneaked(() -> inputStream.put(phaseSetting)).run();  // enqueue the phaseSetting to the amplifier's input stream
+    var thread = new Thread(() -> {
+      var program = getPuzzleInput();
+      var input = sneaked(inputStream::take);
+      var output = sneaked(outputStream::put);
+      var vm = new IntcodeVm(program, input, output);
+      vm.run();
+    });
     thread.start();
     return thread;
   }
