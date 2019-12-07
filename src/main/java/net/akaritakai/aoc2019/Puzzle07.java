@@ -37,12 +37,12 @@ public class Puzzle07 extends AbstractPuzzle {
 
   @Override
   public String solvePart2() {
-    var max = Collections2.permutations(List.of(5, 6, 7, 8, 9))
+    var maxSignal = Collections2.permutations(List.of(5, 6, 7, 8, 9))
         .stream()
         .mapToInt(this::runChainedLoopedAmplifiers)
         .max()
         .orElseThrow(() -> new IllegalStateException("No amplifier outputs returned"));
-    return String.valueOf(max);
+    return String.valueOf(maxSignal);
   }
 
   /**
@@ -51,8 +51,11 @@ public class Puzzle07 extends AbstractPuzzle {
    */
   int runChainedAmplifiers(List<Integer> phaseSettings) {
     AtomicInteger input = new AtomicInteger(0);
-    IntStream.range(0, phaseSettings.size())
-        .forEach(i -> input.set(runAmplifier(phaseSettings.get(i), input.get())));
+    IntStream.range(0, phaseSettings.size()).forEach(i -> {
+      var phaseSetting = phaseSettings.get(i);
+      var output = runAmplifier(phaseSetting, input.get());
+      input.set(output); // pass output to the next amplifier
+    });
     return input.get();
   }
 
@@ -77,7 +80,7 @@ public class Puzzle07 extends AbstractPuzzle {
         .limit(phaseSettings.size())
         .collect(Collectors.toList());
     // Create and start the amplifiers
-    var vms = IntStream.range(0, phaseSettings.size())
+    var amplifiers = IntStream.range(0, phaseSettings.size())
         .mapToObj(i -> {
           var phaseSetting = phaseSettings.get(i);
           var input = streams.get(i);
@@ -86,7 +89,7 @@ public class Puzzle07 extends AbstractPuzzle {
         })
         .collect(Collectors.toList());
     streams.get(0).add(0); // send 0 to the first amplifier
-    vms.forEach(sneaked((SneakyConsumer<Thread, Exception>) Thread::join)); // wait for the amplifiers to halt
+    amplifiers.forEach(sneaked((SneakyConsumer<Thread, Exception>) Thread::join)); // wait for the amplifiers to halt
     return streams.get(0).remove();
   }
 
