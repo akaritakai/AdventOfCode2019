@@ -27,7 +27,7 @@ public class Puzzle07 extends AbstractPuzzle {
 
   @Override
   public String solvePart1() {
-    var maxSignal = Collections2.orderedPermutations(List.of(0, 1, 2, 3, 4))
+    var maxSignal = Collections2.permutations(List.of(0, 1, 2, 3, 4))
         .stream()
         .mapToInt(this::runChainedAmplifiers)
         .max()
@@ -37,7 +37,7 @@ public class Puzzle07 extends AbstractPuzzle {
 
   @Override
   public String solvePart2() {
-    var max = Collections2.orderedPermutations(List.of(5, 6, 7, 8, 9))
+    var max = Collections2.permutations(List.of(5, 6, 7, 8, 9))
         .stream()
         .mapToInt(this::runChainedLoopedAmplifiers)
         .max()
