@@ -90,9 +90,9 @@ public class IntcodeVm {
     private Instruction(int ip) {
       var code = _positions.get(ip);
       opCode = OpCode.of(code % 100);
-      param1 = getParam(Mode.of((code / 100) % 2), ip + 1);
-      param2 = getParam(Mode.of((code / 1000) % 2), ip + 2);
-      param3 = getParam(Mode.of((code / 10000) % 2), ip + 3);
+      param1 = getParam(Mode.of((code / 100) & 1), ip + 1);
+      param2 = getParam(Mode.of((code / 1000) & 1), ip + 2);
+      param3 = getParam(Mode.of((code / 10000) & 1), ip + 3);
     }
 
     private Integer getParam(Mode mode, int offset) {
