@@ -41,6 +41,7 @@ dependencies {
   implementation "org.slf4j:slf4j-api:1.7.29"
   implementation "com.google.guava:guava:28.1-jre"
   implementation "com.squareup.okhttp3:okhttp:4.2.2"
+  implementation "com.rainerhahnekamp:sneakythrow:1.2.0"
 
   runtimeOnly "org.apache.logging.log4j:log4j-slf4j-impl:2.12.1"
 
