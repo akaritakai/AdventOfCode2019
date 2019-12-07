@@ -48,7 +48,7 @@ public class Puzzle07 extends AbstractPuzzle {
    * Runs a set of amplifiers in a chained feedback loop, applying the phase settings provided to each of them.
    * Returns the last unused output of the last amplifier after all amplifiers halt.
    */
-  int runAmplifiers(List<Integer> phaseSettings) {
+  private int runAmplifiers(List<Integer> phaseSettings) {
     // Create the i/o streams
     var streams = Stream.generate((Supplier<LinkedBlockingQueue<Integer>>) LinkedBlockingQueue::new)
         .limit(phaseSettings.size())
@@ -71,7 +71,7 @@ public class Puzzle07 extends AbstractPuzzle {
    * Returns a thread for an amplifier that accepts a phase setting and an input stream. Amplifier outputs will be sent
    * to the output stream.
    */
-  Thread runAmplifier(int phaseSetting, BlockingQueue<Integer> inputStream, BlockingQueue<Integer> outputStream) {
+  private Thread runAmplifier(int phaseSetting, BlockingQueue<Integer> inputStream, BlockingQueue<Integer> outputStream) {
     sneaked(() -> inputStream.put(phaseSetting)).run();  // enqueue the phaseSetting to the amplifier's input stream
     var thread = new Thread(() -> {
       var program = getPuzzleInput();
