@@ -50,7 +50,7 @@ public class TestIntcodeVm {
     LongStream.range(-10, 20).forEach(i -> {
       var vm = new IntcodeVm("3,1,99", () -> i, output -> {});
       vm.run();
-      Assert.assertEquals((long) vm.memory().get(1), i);
+      Assert.assertEquals((long) vm.memory().get(1L), i);
     });
   }
 

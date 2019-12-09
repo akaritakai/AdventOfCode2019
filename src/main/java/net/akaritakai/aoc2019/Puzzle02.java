@@ -14,10 +14,10 @@ public class Puzzle02 extends AbstractPuzzle {
   @Override
   public String solvePart1() {
     var vm = new IntcodeVm(getPuzzleInput());
-    vm.memory().put(1, 12L);
-    vm.memory().put(2, 2L);
+    vm.memory().put(1L, 12L);
+    vm.memory().put(2L, 2L);
     vm.run();
-    return String.valueOf(vm.memory().get(0));
+    return String.valueOf(vm.memory().get(0L));
   }
 
   @Override
@@ -25,10 +25,10 @@ public class Puzzle02 extends AbstractPuzzle {
     for (long noun = 0; noun < 100; noun++) {
       for (long verb = 0; verb < 100; verb++) {
         var vm = new IntcodeVm(getPuzzleInput());
-        vm.memory().put(1, noun);
-        vm.memory().put(2, verb);
+        vm.memory().put(1L, noun);
+        vm.memory().put(2L, verb);
         vm.run();
-        if (vm.memory().get(0) == 19690720) {
+        if (vm.memory().get(0L) == 19690720) {
           return String.valueOf(100 * noun + verb);
         }
       }

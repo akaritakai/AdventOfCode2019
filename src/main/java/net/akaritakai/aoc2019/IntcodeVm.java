@@ -12,10 +12,10 @@ import java.util.function.Supplier;
  * Simulates an Intcode machine.
  */
 public class IntcodeVm {
-  private final Map<Integer, Long> _memory;
+  private final Map<Long, Long> _memory;
   private final Supplier<Long> _input;
   private final Consumer<Long> _output;
-  private int _ip = 0;
+  private long _ip = 0;
   private long _base = 0;
 
   /**
@@ -61,11 +61,11 @@ public class IntcodeVm {
           break;
         }
         case JUMP_IF_TRUE: {
-          _ip = param(1).value != 0 ? Math.toIntExact(param(2).value) : _ip + 3;
+          _ip = param(1).value != 0 ? param(2).value : _ip + 3;
           break;
         }
         case JUMP_IF_FALSE: {
-          _ip = param(1).value == 0 ? Math.toIntExact(param(2).value) : _ip + 3;
+          _ip = param(1).value == 0 ? param(2).value : _ip + 3;
           break;
         }
         case LESS_THAN: {
@@ -93,15 +93,15 @@ public class IntcodeVm {
   /**
    * Gets the VM's memory.
    */
-  public Map<Integer, Long> memory() {
+  public Map<Long, Long> memory() {
     return _memory;
   }
 
   @VisibleForTesting
-  static Map<Integer, Long> programMemory(String program) {
-    Map<Integer, Long> memory = new ConcurrentHashMap<>();
+  static Map<Long, Long> programMemory(String program) {
+    Map<Long, Long> memory = new ConcurrentHashMap<>();
     var it = Arrays.stream(program.trim().split(",")).map(Long::parseLong).iterator();
-    for (int i = 0; it.hasNext(); i++) {
+    for (long i = 0; it.hasNext(); i++) {
       memory.put(i, it.next());
     }
     return memory;
@@ -119,13 +119,13 @@ public class IntcodeVm {
     ADJUST_RELATIVE_BASE (9),
     HALT (99);
 
-    private final int _code;
+    private final long _code;
 
-    OpCode(int code) {
+    OpCode(long code) {
       _code = code;
     }
 
-    private static OpCode of(int code) {
+    private static OpCode of(long code) {
       return Arrays.stream(OpCode.values())
           .filter(opcode -> opcode._code == code)
           .findAny()
@@ -134,7 +134,7 @@ public class IntcodeVm {
   }
 
   private OpCode opcode() {
-    return OpCode.of(Math.toIntExact(_memory.get(_ip) % 100));
+    return OpCode.of(_memory.get(_ip) % 100);
   }
 
   private enum Mode {
@@ -142,13 +142,13 @@ public class IntcodeVm {
     IMMEDIATE (1),
     RELATIVE (2);
 
-    private final int _code;
+    private final long _code;
 
-    Mode(int code) {
+    Mode(long code) {
       _code = code;
     }
 
-    private static Mode of(int code) {
+    private static Mode of(long code) {
       return Arrays.stream(Mode.values())
           .filter(mode -> mode._code == code)
           .findAny()
@@ -156,25 +156,25 @@ public class IntcodeVm {
     }
   }
 
-  private Mode mode(int param) {
-    var ref = Math.toIntExact(_memory.getOrDefault(_ip, 0L));
+  private Mode mode(long param) {
+    var ref = _memory.getOrDefault(_ip, 0L);
     return Mode.of((ref / pow10(param + 1)) % 10);
   }
 
   private final class Parameter {
-    private final int address;
+    private final long address;
     private final long value;
 
     private Parameter(int param) {
       switch (mode(param)) {
         case POSITION:
-          address = Math.toIntExact(_memory.getOrDefault(_ip + param, 0L));
+          address = _memory.getOrDefault(_ip + param, 0L);
           break;
         case IMMEDIATE:
           address = _ip + param;
           break;
         case RELATIVE:
-          address = Math.toIntExact(_memory.getOrDefault(_ip + param, 0L) + _base);
+          address = _memory.getOrDefault(_ip + param, 0L) + _base;
           break;
         default: throw new UnsupportedOperationException("Unknown mode: " + mode(param));
       }
@@ -186,8 +186,8 @@ public class IntcodeVm {
     return new Parameter(i);
   }
 
-  private static int pow10(int i) {
-    int power = 10;
+  private static long pow10(long i) {
+    long power = 10;
     while (--i > 0) {
       power *= 10;
     }
