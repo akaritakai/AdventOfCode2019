@@ -16,7 +16,7 @@ public class IntcodeVm {
   private final Supplier<Long> _input;
   private final Consumer<Long> _output;
   private int _ip = 0;
-  private int _base = 0;
+  private long _base = 0;
 
   /**
    * Constructor which accepts the program to run.
@@ -156,27 +156,29 @@ public class IntcodeVm {
     }
   }
 
+  private Mode mode(int param) {
+    var ref = Math.toIntExact(_memory.getOrDefault(_ip, 0L));
+    return Mode.of((ref / pow10(param + 1)) % 10);
+  }
+
   private final class Parameter {
     private final int address;
     private final long value;
 
     private Parameter(int param) {
-      var ipRef = Math.toIntExact(_memory.getOrDefault(_ip, 0L));
-      var ref = _memory.getOrDefault(_ip + param, 0L);
-      var mode = Mode.of((ipRef / pow10(param + 1)) % 10);
-      switch (mode) {
+      switch (mode(param)) {
         case POSITION:
-          address = Math.toIntExact(ref);
+          address = Math.toIntExact(_memory.getOrDefault(_ip + param, 0L));
           break;
         case IMMEDIATE:
           address = _ip + param;
           break;
         case RELATIVE:
-          address = Math.toIntExact(ref) + _base;
+          address = Math.toIntExact(_memory.getOrDefault(_ip + param, 0L) + _base);
           break;
-        default: throw new UnsupportedOperationException("Unknown mode: " + mode);
+        default: throw new UnsupportedOperationException("Unknown mode: " + mode(param));
       }
-      value = _memory.getOrDefault(address,0L);
+      value = _memory.getOrDefault(address, 0L);
     }
   }
 
