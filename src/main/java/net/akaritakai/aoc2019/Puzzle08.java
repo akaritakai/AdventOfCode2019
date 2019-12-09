@@ -39,26 +39,20 @@ public class Puzzle08 extends AbstractPuzzle {
             .reduce((above, below) -> above == 2 ? below : above)
             .orElseThrow(() -> new IllegalStateException("No pixel data returned")))
         .collect(Collectors.toList());
-    return '\n' + renderImage(pixels);
+    return "\n" + renderImage(pixels);
   }
 
   private String renderImage(List<Integer> pixels) {
-    var sb = new StringBuilder();
-    var p = 0;
-    for (int y = 0; y < IMAGE_HEIGHT; y++) {
-      for (int x = 0; x < IMAGE_WIDTH; x++) {
-        switch (pixels.get(p++)) {
-          case 0:
-            sb.append("█");
-            break;
-          case 1:
-            sb.append("░");
-            break;
-        }
-      }
-      sb.append('\n');
-    }
-    return sb.toString().trim();
+    var it = pixels.iterator();
+    return IntStream.range(0, IMAGE_HEIGHT).mapToObj(y ->
+        IntStream.range(0, IMAGE_WIDTH).mapToObj(x -> {
+          switch (it.next()) {
+            case 0: return " ";
+            case 1: return "#";
+            default: throw new IllegalStateException("Invalid color");
+          }
+        }).collect(Collectors.joining()))
+        .collect(Collectors.joining("\n"));
   }
 
   private List<List<Integer>> getLayers() {
