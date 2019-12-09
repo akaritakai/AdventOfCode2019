@@ -1,14 +1,11 @@
 package net.akaritakai.aoc2019;
 
-import java.awt.Point;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import com.google.common.collect.Sets;
+
+import java.awt.*;
+import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Puzzle03 extends AbstractPuzzle {
 
@@ -68,25 +65,29 @@ public class Puzzle03 extends AbstractPuzzle {
         var direction = instruction.substring(0, 1);
         var distance = Integer.parseInt(instruction.substring(1));
         switch (direction) {
-          case "U" -> {
+          case "U": {
             while (distance-- > 0) {
               _pointLengthMap.put(new Point(x, ++y), ++length);
             }
+            break;
           }
-          case "D" -> {
+          case "D": {
             while (distance-- > 0) {
               _pointLengthMap.put(new Point(x, --y), ++length);
             }
+            break;
           }
-          case "L" -> {
+          case "L": {
             while (distance-- > 0) {
               _pointLengthMap.put(new Point(--x, y), ++length);
             }
+            break;
           }
-          case "R" -> {
+          case "R": {
             while (distance-- > 0) {
               _pointLengthMap.put(new Point(++x, y), ++length);
             }
+            break;
           }
         }
       }

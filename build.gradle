@@ -16,20 +16,11 @@ java {
   targetCompatibility = JavaVersion.VERSION_13
 }
 
-compileJava {
-  options.compilerArgs += ["--enable-preview"]
-}
-
-compileTestJava {
-  options.compilerArgs += ["--enable-preview"]
-}
-
 test {
   useTestNG()
   testLogging {
     events TestLogEvent.STARTED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED
   }
-  jvmArgs "--enable-preview"
 }
 
 repositories {
@@ -52,7 +43,6 @@ dependencies {
 
 
 application {
-  applicationDefaultJvmArgs = ["--enable-preview"]
   mainClassName = "net.akaritakai.aoc2019.Main"
 }
 

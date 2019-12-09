@@ -2,16 +2,15 @@ package net.akaritakai.aoc2019;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+public class Puzzle09 extends AbstractPuzzle {
 
-public class Puzzle05 extends AbstractPuzzle {
-
-  public Puzzle05(String puzzleInput) {
+  public Puzzle09(String puzzleInput) {
     super(puzzleInput);
   }
 
   @Override
   public int getDay() {
-    return 5;
+    return 9;
   }
 
   @Override
@@ -25,7 +24,7 @@ public class Puzzle05 extends AbstractPuzzle {
   @Override
   public String solvePart2() {
     var output = new AtomicLong();
-    var vm = new IntcodeVm(getPuzzleInput(), () -> 5L, output::set);
+    var vm = new IntcodeVm(getPuzzleInput(), () -> 2L, output::set);
     vm.run();
     return String.valueOf(output.get());
   }

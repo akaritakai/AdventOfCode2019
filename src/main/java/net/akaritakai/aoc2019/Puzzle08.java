@@ -48,8 +48,12 @@ public class Puzzle08 extends AbstractPuzzle {
     for (int y = 0; y < IMAGE_HEIGHT; y++) {
       for (int x = 0; x < IMAGE_WIDTH; x++) {
         switch (pixels.get(p++)) {
-          case 0 -> sb.append("█");
-          case 1 -> sb.append("░");
+          case 0:
+            sb.append("█");
+            break;
+          case 1:
+            sb.append("░");
+            break;
         }
       }
       sb.append('\n');
