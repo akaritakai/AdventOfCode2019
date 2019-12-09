@@ -107,7 +107,7 @@ public class IntcodeVm {
     return memory;
   }
 
-  enum OpCode {
+  private enum OpCode {
     ADD (1),
     MULTIPLY (2),
     INPUT (3),
@@ -137,7 +137,7 @@ public class IntcodeVm {
     return OpCode.of(Math.toIntExact(_memory.get(_ip) % 100));
   }
 
-  enum Mode {
+  private enum Mode {
     POSITION (0),
     IMMEDIATE (1),
     RELATIVE (2);
