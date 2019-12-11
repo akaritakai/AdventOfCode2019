@@ -47,39 +47,21 @@ public class Puzzle11 extends AbstractPuzzle {
 
   private String renderImage(Map<Point, Color> hull) {
     var area = getPaintedDimensions(hull);
-    return IntStream.rangeClosed(area.y, area.y + area.height)
-        .boxed()
+    return IntStream.rangeClosed(area.y, area.y + area.height).boxed()
         .sorted(Collections.reverseOrder()) // Hull image is drawn upside down
-        .map(y -> IntStream.rangeClosed(area.x, area.x + area.width)
-            .boxed()
+        .map(y -> IntStream.rangeClosed(area.x, area.x + area.width).boxed()
             .map(x -> new Point(x, y))
-            .map(point -> hull.getOrDefault(point, Color.BLACK))
-            .map(color -> color == Color.WHITE ? "#" : " ")
+            .map(point -> hull.getOrDefault(point, DEFAULT))
+            .map(color -> color == DEFAULT ? " " : "#")
             .collect(Collectors.joining()))
         .collect(Collectors.joining("\n"));
   }
 
   private Rectangle getPaintedDimensions(Map<Point, Color> hull) {
-    var minHeight = hull.entrySet().stream()
-        .filter(e -> e.getValue() == Color.WHITE)
-        .mapToInt(e -> e.getKey().y)
-        .min()
-        .orElseThrow();
-    var maxHeight = hull.entrySet().stream()
-        .filter(e -> e.getValue() == Color.WHITE)
-        .mapToInt(e -> e.getKey().y)
-        .max()
-        .orElseThrow();
-    var minWidth = hull.entrySet().stream()
-        .filter(e -> e.getValue() == Color.WHITE)
-        .mapToInt(e -> e.getKey().x)
-        .min()
-        .orElseThrow();
-    var maxWidth = hull.entrySet().stream()
-        .filter(e -> e.getValue() == Color.WHITE)
-        .mapToInt(e -> e.getKey().x)
-        .max()
-        .orElseThrow();
+    var minHeight = hull.entrySet().stream().filter(e -> e.getValue() != DEFAULT).mapToInt(e -> e.getKey().y).min().orElseThrow();
+    var maxHeight = hull.entrySet().stream().filter(e -> e.getValue() != DEFAULT).mapToInt(e -> e.getKey().y).max().orElseThrow();
+    var minWidth = hull.entrySet().stream().filter(e -> e.getValue() != DEFAULT).mapToInt(e -> e.getKey().x).min().orElseThrow();
+    var maxWidth = hull.entrySet().stream().filter(e -> e.getValue() != DEFAULT).mapToInt(e -> e.getKey().x).max().orElseThrow();
     return new Rectangle(minWidth, minHeight, maxWidth - minWidth, maxHeight - minHeight);
   }
 
@@ -106,6 +88,19 @@ public class Puzzle11 extends AbstractPuzzle {
     }
 
     @VisibleForTesting
+    synchronized void onOutput(long value) {
+      _robotOutput.add(value);
+      if (_robotOutput.size() == 2) {
+        _hull.put(_position, Color.of(_robotOutput.get(0))); // color the hull
+        _painted.add(_position); // mark that we colored this position
+        _direction = _direction.turn(Turn.of(_robotOutput.get(1))); // turn the robot
+        _position = _direction.move(_position); // move forward one space
+        _robotInput.add(_hull.getOrDefault(_position, DEFAULT).getValue()); // signal the program
+        _robotOutput.clear();
+      }
+    }
+
+    @VisibleForTesting
     Set<Point> getPaintedSquares() {
       return Collections.unmodifiableSet(_painted);
     }
@@ -118,22 +113,6 @@ public class Puzzle11 extends AbstractPuzzle {
     @VisibleForTesting
     Point getRobotPosition() {
       return _position;
-    }
-
-    @VisibleForTesting
-    synchronized void onOutput(long value) {
-      _robotOutput.add(value);
-      if (_robotOutput.size() == 2) {
-        // Operate the robot
-        _hull.put(_position, Color.of(_robotOutput.get(0))); // color the hull
-        _painted.add(_position); // mark that we colored this position
-        _direction = _direction.turn(Turn.of(_robotOutput.get(1))); // turn the robot
-        _position = _direction.move(_position); // move forward one space
-        // Signal the program
-        _robotInput.add(_hull.getOrDefault(_position, DEFAULT).getValue());
-        // Clear output cache
-        _robotOutput.clear();
-      }
     }
   }
 
