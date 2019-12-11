@@ -8,8 +8,11 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
 import static net.akaritakai.aoc2019.Puzzle11.Color.DEFAULT;
@@ -46,7 +49,7 @@ public class Puzzle11 extends AbstractPuzzle {
   }
 
   private String renderImage(Map<Point, Color> hull) {
-    var area = getPaintedDimensions(hull);
+    var area = getVisibleDimensions(hull);
     return IntStream.rangeClosed(area.y, area.y + area.height).boxed()
         .sorted(Collections.reverseOrder()) // Hull image is drawn upside down
         .map(y -> IntStream.rangeClosed(area.x, area.x + area.width).boxed()
@@ -57,11 +60,15 @@ public class Puzzle11 extends AbstractPuzzle {
         .collect(Collectors.joining("\n"));
   }
 
-  private Rectangle getPaintedDimensions(Map<Point, Color> hull) {
-    var minHeight = hull.entrySet().stream().filter(e -> e.getValue() != DEFAULT).mapToInt(e -> e.getKey().y).min().orElseThrow();
-    var maxHeight = hull.entrySet().stream().filter(e -> e.getValue() != DEFAULT).mapToInt(e -> e.getKey().y).max().orElseThrow();
-    var minWidth = hull.entrySet().stream().filter(e -> e.getValue() != DEFAULT).mapToInt(e -> e.getKey().x).min().orElseThrow();
-    var maxWidth = hull.entrySet().stream().filter(e -> e.getValue() != DEFAULT).mapToInt(e -> e.getKey().x).max().orElseThrow();
+  private Rectangle getVisibleDimensions(Map<Point, Color> hull) {
+    /* Points are visible if they "stand out" from the hull's default color (i.e. are not the default color) */
+    Predicate<Map.Entry<Point, Color>> isVisible = e -> e.getValue() != DEFAULT;
+    Supplier<Stream<Point>> visiblePoints = () -> hull.entrySet().stream().filter(isVisible).map(Map.Entry::getKey);
+
+    var minHeight = visiblePoints.get().mapToInt(point -> point.y).min().orElseThrow();
+    var maxHeight = visiblePoints.get().mapToInt(point -> point.y).max().orElseThrow();
+    var minWidth = visiblePoints.get().mapToInt(point -> point.x).min().orElseThrow();
+    var maxWidth = visiblePoints.get().mapToInt(point -> point.x).max().orElseThrow();
     return new Rectangle(minWidth, minHeight, maxWidth - minWidth, maxHeight - minHeight);
   }
 
