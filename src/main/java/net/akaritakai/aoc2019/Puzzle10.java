@@ -34,12 +34,10 @@ public class Puzzle10 extends AbstractPuzzle {
         .max(Comparator.comparingInt(asteroid -> getColinearPointRays(asteroid, asteroids).size()))
         .orElseThrow(() -> new IllegalStateException("No stations found"));
     asteroids.remove(station);
-    var orderedRays = getColinearPointRays(station, asteroids);
+    var rays = getColinearPointRays(station, asteroids);
     var bet = IntStream.iterate(0, i -> i + 1)
-        .mapToObj(i -> {
-          var ray = orderedRays.get(i % orderedRays.size());
-          return ray.isEmpty() ? null : ray.remove(0);
-        })
+        .mapToObj(i -> rays.get(i % rays.size()))
+        .map(ray -> ray.isEmpty() ? null : ray.remove(0))
         .filter(Objects::nonNull)
         .skip(199)
         .findFirst()
