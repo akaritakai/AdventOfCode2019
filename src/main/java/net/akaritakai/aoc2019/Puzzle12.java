@@ -1,7 +1,11 @@
 package net.akaritakai.aoc2019;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.apache.commons.math3.util.ArithmeticUtils.lcm;
 
@@ -18,8 +22,8 @@ public class Puzzle12 extends AbstractPuzzle {
 
   @Override
   public String solvePart1() {
-    var moons = getBodies();
-    for (int i = 0; i < 1000; i++) {
+    var moons = getMoons();
+    for (var i = 0; i < 1000; i++) {
       moons = step(moons);
     }
     long energy = moons.stream().mapToLong(Moon::getTotalEnergy).sum();
@@ -28,103 +32,90 @@ public class Puzzle12 extends AbstractPuzzle {
 
   @Override
   public String solvePart2() {
-    var moons = getBodies();
-    var xSet = new HashSet<>(Collections.singleton(moons.stream().map(Moon::xOnly).collect(Collectors.toList())));
-    var ySet = new HashSet<>(Collections.singleton(moons.stream().map(Moon::yOnly).collect(Collectors.toList())));
-    var zSet = new HashSet<>(Collections.singleton(moons.stream().map(Moon::zOnly).collect(Collectors.toList())));
-    var xCycle = Long.MAX_VALUE;
-    var yCycle = Long.MAX_VALUE;
-    var zCycle = Long.MAX_VALUE;
-    for (long i = 1; xCycle == Long.MAX_VALUE || yCycle == Long.MAX_VALUE || zCycle == Long.MAX_VALUE; i++) {
+    var moons = getMoons();
+    var xCycle = new VectorCycle();
+    var yCycle = new VectorCycle();
+    var zCycle = new VectorCycle();
+    while (xCycle.notFound() || yCycle.notFound() || zCycle.notFound()) {
+      xCycle.add(moons.stream().map(moon -> moon.x));
+      yCycle.add(moons.stream().map(moon -> moon.y));
+      zCycle.add(moons.stream().map(moon -> moon.z));
       moons = step(moons);
-      if (!xSet.add(moons.stream().map(Moon::xOnly).collect(Collectors.toList()))) {
-        xCycle = Math.min(xCycle, i);
-      }
-      if (!ySet.add(moons.stream().map(Moon::yOnly).collect(Collectors.toList()))) {
-        yCycle = Math.min(yCycle, i);
-      }
-      if (!zSet.add(moons.stream().map(Moon::zOnly).collect(Collectors.toList()))) {
-        zCycle = Math.min(zCycle, i);
-      }
     }
-    return String.valueOf(lcm(lcm(xCycle, yCycle), zCycle));
+    return String.valueOf(lcm(lcm(xCycle.length(), yCycle.length()), zCycle.length()));
   }
 
-  private List<Moon> step(List<Moon> moons) {
+  @VisibleForTesting
+  List<Moon> step(List<Moon> moons) {
     return moons.stream()
         .map(moon -> moon.applyGravity(moons))
         .map(Moon::applyVelocity)
         .collect(Collectors.toList());
   }
 
-  private List<Moon> getBodies() {
+  @VisibleForTesting
+  List<Moon> getMoons() {
+    var inputFormat = Pattern.compile("^<x=(\\S+), y=(\\S+), z=(\\S+)>$");
     return getPuzzleInput()
         .lines()
         .map(line -> {
-          long x = Long.parseLong(line.replaceAll("^<x=(-?\\d+), y=(-?\\d+), z=(-?\\d+)>$", "$1"));
-          long y = Long.parseLong(line.replaceAll("^<x=(-?\\d+), y=(-?\\d+), z=(-?\\d+)>$", "$2"));
-          long z = Long.parseLong(line.replaceAll("^<x=(-?\\d+), y=(-?\\d+), z=(-?\\d+)>$", "$3"));
-          return new Moon(new Position(x, y, z));
+          var x = Long.parseLong(line.replaceAll(inputFormat.pattern(), "$1"));
+          var y = Long.parseLong(line.replaceAll(inputFormat.pattern(), "$2"));
+          var z = Long.parseLong(line.replaceAll(inputFormat.pattern(), "$3"));
+          return new Moon(x, y, z);
         })
         .collect(Collectors.toList());
   }
 
-  private static class Moon {
-    private final Position position;
-    private final Velocity velocity;
+  @VisibleForTesting
+  static class Moon {
+    private final Vector x;
+    private final Vector y;
+    private final Vector z;
 
-    private Moon(Position position) {
-      this.position = position;
-      this.velocity = new Velocity(0, 0, 0);
+    private Moon(long xPos, long yPos, long zPos) {
+      x = new Vector(xPos, 0);
+      y = new Vector(yPos, 0);
+      z = new Vector(zPos, 0);
     }
 
-    private Moon(Position position, Velocity velocity) {
-      this.position = position;
-      this.velocity = velocity;
+    private Moon(Vector x, Vector y, Vector z) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+    }
+
+    @VisibleForTesting
+    Moon(long xPos, long yPos, long zPos, long dx, long dy, long dz) {
+      x = new Vector(xPos, dx);
+      y = new Vector(yPos, dy);
+      z = new Vector(zPos, dz);
     }
 
     private Moon applyGravity(Collection<Moon> moons) {
-      Velocity delta = moons.stream()
-          .filter(moon -> moon != this)
-          .map(moon -> {
-            long dx = Long.compare(moon.position.x, this.position.x);
-            long dy = Long.compare(moon.position.y, this.position.y);
-            long dz = Long.compare(moon.position.z, this.position.z);
-            return new Velocity(dx, dy, dz);
-          })
-          .reduce((v1, v2) -> new Velocity(v1.dx + v2.dx, v1.dy + v2.dy, v1.dz + v2.dz))
-          .orElse(new Velocity(0, 0, 0));
-      return new Moon(position, new Velocity(velocity.dx + delta.dx, velocity.dy + delta.dy,
-          velocity.dz + delta.dz));
+      Vector x = this.x.gravity(moons.stream().map(moon -> moon.x));
+      Vector y = this.y.gravity(moons.stream().map(moon -> moon.y));
+      Vector z = this.z.gravity(moons.stream().map(moon -> moon.z));
+      return new Moon(x, y, z);
     }
 
     private Moon applyVelocity() {
-      return new Moon(new Position(this.position.x + velocity.dx, this.position.y + velocity.dy,
-          this.position.z + velocity.dz), velocity);
+      return new Moon(x.velocity(), y.velocity(), z.velocity());
     }
 
-    public long getPotentialEnergy() {
-      return Math.abs(position.x) + Math.abs(position.y) + Math.abs(position.z);
+    @VisibleForTesting
+    long getPotentialEnergy() {
+      return Math.abs(x.position) + Math.abs(y.position) + Math.abs(z.position);
     }
 
-    public long getKineticEnergy() {
-      return Math.abs(velocity.dx) + Math.abs(velocity.dy) + Math.abs(velocity.dz);
+    @VisibleForTesting
+    long getKineticEnergy() {
+      return Math.abs(x.velocity) + Math.abs(y.velocity) + Math.abs(z.velocity);
     }
 
-    public long getTotalEnergy() {
+    @VisibleForTesting
+    long getTotalEnergy() {
       return getPotentialEnergy() * getKineticEnergy();
-    }
-
-    private Moon xOnly() {
-      return new Moon(new Position(position.x, 0, 0), new Velocity(velocity.dx, 0, 0));
-    }
-
-    private Moon yOnly() {
-      return new Moon(new Position(0, position.y, 0), new Velocity(0, velocity.dy, 0));
-    }
-
-    private Moon zOnly() {
-      return new Moon(new Position(0, 0, position.z), new Velocity(0, 0, velocity.dz));
     }
 
     @Override
@@ -132,32 +123,7 @@ public class Puzzle12 extends AbstractPuzzle {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       Moon moon = (Moon) o;
-      return Objects.equals(position, moon.position) && Objects.equals(velocity, moon.velocity);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(position, velocity);
-    }
-  }
-
-  private static class Position {
-    private final long x;
-    private final long y;
-    private final long z;
-
-    public Position(long x, long y, long z) {
-      this.x = x;
-      this.y = y;
-      this.z = z;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Position position = (Position) o;
-      return x == position.x && y == position.y && z == position.z;
+      return Objects.equals(x, moon.x) && Objects.equals(y, moon.y) && Objects.equals(z, moon.z);
     }
 
     @Override
@@ -166,28 +132,58 @@ public class Puzzle12 extends AbstractPuzzle {
     }
   }
 
-  private static class Velocity {
-    private final long dx;
-    private final long dy;
-    private final long dz;
+  private static class Vector {
+    private final long position;
+    private final long velocity;
 
-    public Velocity(long dx, long dy, long dz) {
-      this.dx = dx;
-      this.dy = dy;
-      this.dz = dz;
+    private Vector(long position, long velocity) {
+      this.position = position;
+      this.velocity = velocity;
+    }
+
+    private Vector gravity(Stream<Vector> vectors) {
+      var dv = vectors.filter(vector -> vector != this)
+          .mapToLong(vector -> Long.compare(vector.position, position))
+          .sum();
+      return new Vector(position, velocity + dv);
+    }
+
+    private Vector velocity() {
+      return new Vector(position + velocity, velocity);
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      Velocity velocity = (Velocity) o;
-      return dx == velocity.dx && dy == velocity.dy && dz == velocity.dz;
+      Vector vector = (Vector) o;
+      return position == vector.position && velocity == vector.velocity;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(dx, dy, dz);
+      return Objects.hash(position, velocity);
+    }
+  }
+
+  private static class VectorCycle {
+    private final Set<List<Vector>> _vectors = new HashSet<>();
+    private boolean _found = false;
+    private long _length = 0;
+
+    private void add(Stream<Vector> vectors) {
+      if (!_found) {
+        _length = _vectors.isEmpty() ? 0 : _length + 1;
+        _found = !_vectors.add(vectors.collect(Collectors.toList()));
+      }
+    }
+
+    private boolean notFound() {
+      return !_found;
+    }
+
+    private long length() {
+      return _length;
     }
   }
 }

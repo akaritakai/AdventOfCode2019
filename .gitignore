@@ -2,6 +2,7 @@
 .gradle
 /build/
 !gradle-wrapper.jar
+.gradletasknamecache
 
 # IntelliJ
 .idea
