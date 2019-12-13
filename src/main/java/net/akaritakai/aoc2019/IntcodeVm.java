@@ -8,6 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static org.apache.commons.math3.util.ArithmeticUtils.pow;
+
 /**
  * Simulates an Intcode machine.
  */
@@ -158,7 +160,7 @@ public class IntcodeVm {
 
   private Mode mode(long param) {
     var ref = _memory.getOrDefault(_ip, 0L);
-    return Mode.of((ref / pow10(param + 1)) % 10);
+    return Mode.of((ref / pow(10, (int) param + 1)) % 10);
   }
 
   private final class Parameter {
@@ -184,13 +186,5 @@ public class IntcodeVm {
 
   private Parameter param(int i) {
     return new Parameter(i);
-  }
-
-  private static long pow10(long i) {
-    long power = 10;
-    while (--i > 0) {
-      power *= 10;
-    }
-    return power;
   }
 }
