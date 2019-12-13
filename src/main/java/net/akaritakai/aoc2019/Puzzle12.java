@@ -35,7 +35,7 @@ public class Puzzle12 extends AbstractPuzzle {
     Long y = null;
     Long z = null;
     var moons = step(getMoons());
-    for (long cycles = 1; x == null || y == null || z == null; cycles++) {
+    for (var cycles = 1L; x == null || y == null || z == null; cycles++) {
       if (x == null && moons.stream().allMatch(moon -> moon.dx == 0)) {
         x = 2 * cycles;
       }
