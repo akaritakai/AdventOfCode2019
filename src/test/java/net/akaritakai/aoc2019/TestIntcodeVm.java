@@ -184,4 +184,35 @@ public class TestIntcodeVm {
     vm.run();
     Assert.assertEquals(output.get(), 1125899906842624L);
   }
+
+  @Test
+  public void testFizzBuzz() {
+    // A FizzBuzz program of my own creation -- assumes that my IntCode simulator is a valid implementation
+    // Uses relative base features with as aggressive register re-use as possible to help catch bugs
+    // Posted here with notes: https://www.reddit.com/r/adventofcode/comments/e9t52d/fizzbuzz_in_intcode/faoo5pg/
+    var program = "109,169,1108,1,101,7,1105,0,165,109,-3,1101,18,0,173,1106,0,24,109,3,1101,49,0,173,1001,3,0,172,"
+        + "2007,172,0,33,1105,0,42,2001,172,1,172,1106,0,28,21008,172,0,2,106,0,173,1101,0,0,173,1006,168,68,104,70,"
+        + "104,105,104,122,104,122,1001,173,1,173,1006,171,83,104,66,104,117,104,122,104,122,1001,173,1,173,1005,173,"
+        + "156,1008,3,100,91,1105,0,141,1007,3,10,98,1105,0,150,1001,3,0,172,1101,0,0,173,1007,172,10,113,1105,0,126,"
+        + "1001,172,-10,172,1001,173,1,173,1106,0,108,1001,173,48,173,1001,172,48,172,4,173,4,172,1106,0,156,104,49,"
+        + "104,48,104,48,1106,0,156,1001,3,48,172,4,172,104,10,1001,3,1,3,1106,0,2,99,3,-3,0,5,-5";
+    var output = new StringBuilder();
+    var vm = new IntcodeVm(program, () -> null, c -> output.append(Character.toString(Math.toIntExact(c))));
+    vm.run();
+
+    var expected = new StringBuilder();
+    for (int i = 1; i <= 100; i++) {
+      if (i % 3 == 0 && i % 5 == 0) {
+        expected.append("FizzBuzz\n");
+      } else if (i % 3 == 0) {
+        expected.append("Fizz\n");
+      } else if (i % 5 == 0) {
+        expected.append("Buzz\n");
+      } else {
+        expected.append(i).append("\n");
+      }
+    }
+
+    Assert.assertEquals(output.toString(), expected.toString());
+  }
 }
