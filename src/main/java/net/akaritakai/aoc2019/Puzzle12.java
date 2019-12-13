@@ -35,7 +35,7 @@ public class Puzzle12 extends AbstractPuzzle {
     Long y = null;
     Long z = null;
     var moons = step(getMoons());
-    for (long cycles = 1; x == null || y == null || z == null; cycles++, moons = step(moons)) {
+    for (long cycles = 1; x == null || y == null || z == null; cycles++) {
       if (x == null && moons.stream().allMatch(moon -> moon.dx == 0)) {
         x = cycles;
       }
@@ -45,6 +45,7 @@ public class Puzzle12 extends AbstractPuzzle {
       if (z == null && moons.stream().allMatch(moon -> moon.dz == 0)) {
         z = cycles;
       }
+      moons = step(moons);
     }
     return String.valueOf(lcm(lcm(2 * x, 2 * y), 2 * z));
   }
