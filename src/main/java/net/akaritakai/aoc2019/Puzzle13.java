@@ -1,5 +1,7 @@
 package net.akaritakai.aoc2019;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,36 +39,40 @@ public class Puzzle13 extends AbstractPuzzle {
     return String.valueOf(state.getScore());
   }
 
-  private static class GameState {
+  @VisibleForTesting
+  static class GameState {
     private final Map<Point, TileType> _screen = new ConcurrentHashMap<>();
     private final List<Long> _gameOutput = new ArrayList<>();
     private long _score = 0;
 
+    @VisibleForTesting
     synchronized void onOutput(long value) {
       _gameOutput.add(value);
       if (_gameOutput.size() == 3) {
         long x = _gameOutput.get(0);
         long y = _gameOutput.get(1);
-        TileType tile = TileType.of(_gameOutput.get(2));
+        var tile = TileType.of(_gameOutput.get(2));
         if (x == -1 && y == 0 && tile == null) {
           _score = _gameOutput.get(2);
         } else {
-          Point position = new Point((int) x, (int) y);
+          var position = new Point((int) x, (int) y);
           _screen.put(position, tile);
         }
         _gameOutput.clear();
       }
     }
 
+    @VisibleForTesting
     Map<Point, TileType> getScreen() {
       return _screen;
     }
 
+    @VisibleForTesting
     long getScore() {
       return _score;
     }
 
-    Supplier<Long> getInput() {
+    private Supplier<Long> getInput() {
       return () -> {
         var ballPos = _screen.entrySet().stream()
             .filter(e -> e.getValue() == TileType.BALL)
@@ -83,26 +89,23 @@ public class Puzzle13 extends AbstractPuzzle {
     }
   }
 
-  private enum TileType {
+  @VisibleForTesting
+  enum TileType {
     EMPTY (0),
     WALL (1),
     BLOCK (2),
     HORIZONTAL_PADDLE (3),
     BALL (4);
 
-    private final long _id;
+    private final long id;
 
     TileType(long id) {
-      _id = id;
+      this.id = id;
     }
 
-    public long getId() {
-      return _id;
-    }
-
-    public static TileType of(long id) {
+    private static TileType of(long id) {
       return Arrays.stream(TileType.values())
-          .filter(color -> color.getId() == id)
+          .filter(color -> color.id == id)
           .findAny()
           .orElse(null);
     }
