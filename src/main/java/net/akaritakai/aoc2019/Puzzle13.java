@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import static net.akaritakai.aoc2019.Puzzle13.TileType.*;
+
 public class Puzzle13 extends AbstractPuzzle {
 
   public Puzzle13(String puzzleInput) {
@@ -26,7 +28,7 @@ public class Puzzle13 extends AbstractPuzzle {
     var state = new GameState();
     var vm = new IntcodeVm(getPuzzleInput(), () -> null, state::onOutput);
     vm.run();
-    long count = state.getScreen().values().stream().filter(tile -> tile == TileType.BLOCK).count();
+    long count = state.getScreen().values().stream().filter(tile -> tile == BLOCK).count();
     return String.valueOf(count);
   }
 
@@ -75,12 +77,12 @@ public class Puzzle13 extends AbstractPuzzle {
     private Supplier<Long> getInput() {
       return () -> {
         var ballPos = _screen.entrySet().stream()
-            .filter(e -> e.getValue() == TileType.BALL)
+            .filter(e -> e.getValue() == BALL)
             .mapToLong(e -> e.getKey().x)
             .findAny()
             .orElse(0);
         var paddlePos = _screen.entrySet().stream()
-            .filter(e -> e.getValue() == TileType.HORIZONTAL_PADDLE)
+            .filter(e -> e.getValue() == HORIZONTAL_PADDLE)
             .mapToLong(e -> e.getKey().x)
             .findAny()
             .orElse(0);
