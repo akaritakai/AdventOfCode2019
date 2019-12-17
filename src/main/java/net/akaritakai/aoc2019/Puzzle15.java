@@ -10,7 +10,6 @@ import org.jgrapht.graph.DefaultEdge;
 import java.awt.*;
 import java.io.Closeable;
 import java.util.List;
-import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -94,7 +93,7 @@ public class Puzzle15 extends AbstractPuzzle {
   @VisibleForTesting
   static class ShipState {
     private final Graph<Point, DefaultEdge> _ship = new DefaultDirectedGraph<>(DefaultEdge.class);
-    private final Queue<Point> _queue = new LinkedList<>();
+    private final Stack<Point> _stack = new Stack<>();
     private final Set<Point> _visited = new HashSet<>();
     private final DroidState _droid;
     private Point _oxygen = null;
@@ -102,16 +101,16 @@ public class Puzzle15 extends AbstractPuzzle {
     ShipState(DroidState droid) {
       _droid = droid;
       _ship.addVertex(droid.getLocation());
-      _queue.add(NORTH.move(droid.getLocation()));
-      _queue.add(SOUTH.move(droid.getLocation()));
-      _queue.add(EAST.move(droid.getLocation()));
-      _queue.add(WEST.move(droid.getLocation()));
+      _stack.push(NORTH.move(droid.getLocation()));
+      _stack.push(SOUTH.move(droid.getLocation()));
+      _stack.push(EAST.move(droid.getLocation()));
+      _stack.push(WEST.move(droid.getLocation()));
     }
 
     private synchronized void exploreShip() {
-      while (!_queue.isEmpty()) {
+      while (!_stack.isEmpty()) {
         // Find the next point we need to explore
-        Point p = _queue.poll();
+        Point p = _stack.pop();
 
         // Don't explore previously explored locations
         if (!_visited.add(p)) {
@@ -144,7 +143,7 @@ public class Puzzle15 extends AbstractPuzzle {
 
         // Enqueue children
         for (Direction direction : Direction.values()) {
-          _queue.add(direction.move(_droid.getLocation()));
+          _stack.push(direction.move(_droid.getLocation()));
         }
       }
       sneaked(_droid::close).run();
