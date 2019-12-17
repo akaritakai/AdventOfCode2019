@@ -1,6 +1,8 @@
 package net.akaritakai.aoc2019;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -14,6 +16,8 @@ import static org.apache.commons.math3.util.ArithmeticUtils.pow;
  * Simulates an Intcode machine.
  */
 public class IntcodeVm {
+  private static final Logger LOG = LoggerFactory.getLogger(IntcodeVm.class);
+
   private final Map<Long, Long> _memory;
   private final Supplier<Long> _input;
   private final Consumer<Long> _output;
@@ -40,55 +44,59 @@ public class IntcodeVm {
    * Runs the VM until it halts.
    */
   public void run() {
-    while (true) {
-      switch (opcode()) {
-        case ADD: {
-          _memory.put(param(3).address, param(1).value + param(2).value);
-          _ip += 4;
-          break;
-        }
-        case MULTIPLY: {
-          _memory.put(param(3).address, param(1).value * param(2).value);
-          _ip += 4;
-          break;
-        }
-        case INPUT: {
-          _memory.put(param(1).address, _input.get());
-          _ip += 2;
-          break;
-        }
-        case OUTPUT: {
-          _output.accept(param(1).value);
-          _ip += 2;
-          break;
-        }
-        case JUMP_IF_TRUE: {
-          _ip = param(1).value != 0 ? param(2).value : _ip + 3;
-          break;
-        }
-        case JUMP_IF_FALSE: {
-          _ip = param(1).value == 0 ? param(2).value : _ip + 3;
-          break;
-        }
-        case LESS_THAN: {
-          _memory.put(param(3).address, param(1).value < param(2).value ? 1L : 0L);
-          _ip += 4;
-          break;
-        }
-        case EQUALS: {
-          _memory.put(param(3).address, param(1).value == param(2).value ? 1L : 0L);
-          _ip += 4;
-          break;
-        }
-        case ADJUST_RELATIVE_BASE: {
-          _base += param(1).value;
-          _ip += 2;
-          break;
-        }
-        case HALT: {
-          return;
+    try {
+      while (true) {
+        switch (opcode()) {
+          case ADD: {
+            _memory.put(param(3).address, param(1).value + param(2).value);
+            _ip += 4;
+            break;
+          }
+          case MULTIPLY: {
+            _memory.put(param(3).address, param(1).value * param(2).value);
+            _ip += 4;
+            break;
+          }
+          case INPUT: {
+            _memory.put(param(1).address, _input.get());
+            _ip += 2;
+            break;
+          }
+          case OUTPUT: {
+            _output.accept(param(1).value);
+            _ip += 2;
+            break;
+          }
+          case JUMP_IF_TRUE: {
+            _ip = param(1).value != 0 ? param(2).value : _ip + 3;
+            break;
+          }
+          case JUMP_IF_FALSE: {
+            _ip = param(1).value == 0 ? param(2).value : _ip + 3;
+            break;
+          }
+          case LESS_THAN: {
+            _memory.put(param(3).address, param(1).value < param(2).value ? 1L : 0L);
+            _ip += 4;
+            break;
+          }
+          case EQUALS: {
+            _memory.put(param(3).address, param(1).value == param(2).value ? 1L : 0L);
+            _ip += 4;
+            break;
+          }
+          case ADJUST_RELATIVE_BASE: {
+            _base += param(1).value;
+            _ip += 2;
+            break;
+          }
+          case HALT: {
+            return;
+          }
         }
       }
+    } catch (Exception e) {
+      LOG.warn("IntCode machine ran into an exception", e);
     }
   }
 
