@@ -94,12 +94,12 @@ public class Puzzle15 extends AbstractPuzzle {
   @VisibleForTesting
   static class ShipState {
     private final Graph<Point, DefaultEdge> _ship = new DefaultDirectedGraph<>(DefaultEdge.class);
-    private Point _oxygen = null;
-    private final Set<Point> _visited = new HashSet<>();
     private final Queue<Point> _queue = new LinkedList<>();
+    private final Set<Point> _visited = new HashSet<>();
     private final DroidState _droid;
+    private Point _oxygen = null;
 
-    public ShipState(DroidState droid) {
+    ShipState(DroidState droid) {
       _droid = droid;
       _ship.addVertex(droid.getLocation());
       _queue.add(NORTH.move(droid.getLocation()));
@@ -186,14 +186,13 @@ public class Puzzle15 extends AbstractPuzzle {
       // away, and then just make the last move.
       var djikstra = new DijkstraShortestPath<>(_ship).getPaths(_droid.getLocation());
       return Arrays.stream(Direction.values())
+          .filter(direction -> _ship.containsVertex(direction.move(p)))
           .map(direction -> Optional.ofNullable(djikstra.getPath(direction.move(p)))
               .map(GraphPath::getVertexList)
               .map(pointsInPath -> {
                 var path = new ArrayList<Direction>();
                 for (int i = 0; i < pointsInPath.size() - 1; i++) {
-                  var start = pointsInPath.get(i);
-                  var end = pointsInPath.get(i + 1);
-                  path.add(Direction.of(start, end));
+                  path.add(Direction.of(pointsInPath.get(i), pointsInPath.get(i + 1)));
                 }
                 path.add(direction.opposite());
                 return path;
@@ -221,7 +220,7 @@ public class Puzzle15 extends AbstractPuzzle {
       return Arrays.stream(State.values())
           .filter(state -> state.value == value)
           .findAny()
-          .orElse(null);
+          .orElseThrow(() -> new IllegalArgumentException("Unknown state value: " + value));
     }
   }
 
@@ -266,7 +265,7 @@ public class Puzzle15 extends AbstractPuzzle {
       return Arrays.stream(Direction.values())
           .filter(direction -> direction.dx == dx && direction.dy == dy)
           .findAny()
-          .orElseThrow();
+          .orElseThrow(() -> new IllegalArgumentException("Points are not adjacent"));
     }
   }
 }
