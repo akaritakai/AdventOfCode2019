@@ -55,9 +55,9 @@ public class Puzzle15 extends AbstractPuzzle {
   }
 
   private static class DroidStateImpl implements DroidState {
-    private Point _location = STARTING_POSITION;
     private final BlockingQueue<Long> _input = new LinkedBlockingQueue<>();
     private final BlockingQueue<Long> _output = new LinkedBlockingQueue<>();
+    private Point _location = STARTING_POSITION;
     private Thread _vmThread;
 
     public DroidStateImpl(String puzzleInput) {
@@ -70,7 +70,7 @@ public class Puzzle15 extends AbstractPuzzle {
 
     public State move(Direction direction) {
       _input.add(direction.getValue());
-      State state = State.of(sneaked(_output::take).get());
+      var state = State.of(sneaked(_output::take).get());
       if (state != State.WALL) {
         _location = direction.move(_location);
       }
@@ -110,7 +110,7 @@ public class Puzzle15 extends AbstractPuzzle {
     private synchronized void exploreShip() {
       while (!_stack.isEmpty()) {
         // Find the next point we need to explore
-        Point p = _stack.pop();
+        var p = _stack.pop();
 
         // Don't explore previously explored locations
         if (!_visited.add(p)) {
@@ -122,7 +122,7 @@ public class Puzzle15 extends AbstractPuzzle {
         State state = null;
         Point previousLocation = null;
         while (directions.hasNext()) {
-          Direction direction = directions.next();
+          var direction = directions.next();
           previousLocation = _droid.getLocation();
           state = _droid.move(direction);
         }
@@ -142,7 +142,7 @@ public class Puzzle15 extends AbstractPuzzle {
         }
 
         // Enqueue children
-        for (Direction direction : Direction.values()) {
+        for (var direction : Direction.values()) {
           _stack.push(direction.move(_droid.getLocation()));
         }
       }
@@ -175,7 +175,7 @@ public class Puzzle15 extends AbstractPuzzle {
 
     private List<Direction> getDirections(Point p) {
       // If we're 1 move away, then just go there
-      for (Direction direction : Direction.values()) {
+      for (var direction : Direction.values()) {
         if (p.equals(direction.move(_droid.getLocation()))) {
           return List.of(direction);
         }
@@ -190,7 +190,7 @@ public class Puzzle15 extends AbstractPuzzle {
               .map(GraphPath::getVertexList)
               .map(pointsInPath -> {
                 var path = new ArrayList<Direction>();
-                for (int i = 0; i < pointsInPath.size() - 1; i++) {
+                for (var i = 0; i < pointsInPath.size() - 1; i++) {
                   path.add(Direction.of(pointsInPath.get(i), pointsInPath.get(i + 1)));
                 }
                 path.add(direction.opposite());
@@ -259,8 +259,8 @@ public class Puzzle15 extends AbstractPuzzle {
     }
 
     private static Direction of(Point start, Point end) {
-      int dx = end.x - start.x;
-      int dy = end.y - start.y;
+      var dx = end.x - start.x;
+      var dy = end.y - start.y;
       return Arrays.stream(Direction.values())
           .filter(direction -> direction.dx == dx && direction.dy == dy)
           .findAny()

@@ -90,10 +90,10 @@ public class Puzzle14 extends AbstractPuzzle {
     Function<String, Long> chemicalQuantity = token -> Long.parseLong(token.split(" ")[0]);
     return getPuzzleInput().trim().lines()
         .map(line -> {
-          String[] sides = line.split(" => ");
-          String name = chemicalName.apply(sides[1]);
-          long quantity = chemicalQuantity.apply(sides[1]);
-          Map<String, Long> reagents = Arrays.stream(sides[0].split(", "))
+          var sides = line.split(" => ");
+          var name = chemicalName.apply(sides[1]);
+          var quantity = chemicalQuantity.apply(sides[1]);
+          var reagents = Arrays.stream(sides[0].split(", "))
               .map(token -> Maps.immutableEntry(chemicalName.apply(token), chemicalQuantity.apply(token)))
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
           return Maps.immutableEntry(name, new ChemicalProduct(quantity, reagents));
