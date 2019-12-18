@@ -224,7 +224,7 @@ public class Puzzle15 extends AbstractPuzzle {
     }
   }
 
-  private static long ordinal(net.akaritakai.aoc2019.geom2d.Direction direction) {
+  private static long ordinal(Direction direction) {
     switch (direction) {
       case NORTH: return 1;
       case SOUTH: return 2;
