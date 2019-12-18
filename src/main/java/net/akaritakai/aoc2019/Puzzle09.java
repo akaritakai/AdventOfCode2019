@@ -1,5 +1,7 @@
 package net.akaritakai.aoc2019;
 
+import net.akaritakai.aoc2019.intcode.IntcodeVm;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Puzzle09 extends AbstractPuzzle {

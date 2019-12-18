@@ -2,9 +2,11 @@ package net.akaritakai.aoc2019;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
+import net.akaritakai.aoc2019.geom2d.Direction;
+import net.akaritakai.aoc2019.geom2d.Point;
+import net.akaritakai.aoc2019.geom2d.Turn;
+import net.akaritakai.aoc2019.intcode.IntcodeVm;
 
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -62,19 +64,19 @@ public class Puzzle17 extends AbstractPuzzle {
             scaffolding.add(new Point(x, y));
             break;
           case '^':
-            vacuumDirection = Direction.UP;
+            vacuumDirection = Direction.NORTH;
             vacuumPosition = new Point(x, y);
             break;
           case '>':
-            vacuumDirection = Direction.RIGHT;
+            vacuumDirection = Direction.EAST;
             vacuumPosition = new Point(x, y);
             break;
           case 'v':
-            vacuumDirection = Direction.DOWN;
+            vacuumDirection = Direction.SOUTH;
             vacuumPosition = new Point(x, y);
             break;
           case '<':
-            vacuumDirection = Direction.LEFT;
+            vacuumDirection = Direction.WEST;
             vacuumPosition = new Point(x, y);
             break;
           case '\n':
@@ -106,16 +108,16 @@ public class Puzzle17 extends AbstractPuzzle {
 
       var turn = getFirstTurn();
       vacuumDirection = vacuumDirection.turn(turn);
-      directions.add(turn.toString());
+      directions.add(turnString(turn));
       while (explored.size() < scaffolding.size()) {
         // Try to go down the path as far as we can go
         var pathLength = 0;
-        var forward = vacuumDirection.move(vacuumPosition);
+        var forward = move(vacuumPosition, vacuumDirection);
         while (scaffolding.contains(forward)) { // if the scaffolding contains this
           vacuumPosition = forward; // move our vacuum
           explored.add(forward); // mark the path as explored
           pathLength++; // increment the path length
-          forward = vacuumDirection.move(vacuumPosition); // look for the next path forward
+          forward = move(vacuumPosition, vacuumDirection); // look for the next path forward
         }
 
         // We've gone down the path as far as we can go
@@ -123,15 +125,15 @@ public class Puzzle17 extends AbstractPuzzle {
 
         if (explored.size() < scaffolding.size()) {
           var direction = vacuumDirection.turn(Turn.LEFT);
-          if (scaffolding.contains(direction.move(vacuumPosition))) {
+          if (scaffolding.contains(move(vacuumPosition, direction))) {
             vacuumDirection = direction;
-            directions.add(Turn.LEFT.toString());
+            directions.add(turnString(Turn.LEFT));
             continue;
           }
           direction = vacuumDirection.turn(Turn.RIGHT);
-          if (scaffolding.contains(direction.move(vacuumPosition))) {
+          if (scaffolding.contains(move(vacuumPosition, direction))) {
             vacuumDirection = direction;
-            directions.add(Turn.RIGHT.toString());
+            directions.add(turnString(Turn.RIGHT));
             continue;
           }
           throw new IllegalStateException("Scaffolding does not accommodate a turn right or left");
@@ -142,16 +144,12 @@ public class Puzzle17 extends AbstractPuzzle {
     }
 
     private Turn getFirstTurn() {
-      var point1 = scaffolding.stream()
+      var scaffoldingStart = scaffolding.stream()
           .filter(p -> Math.abs(p.x - vacuumPosition.x) + Math.abs(p.y - vacuumPosition.y) == 1)
           .findAny()
           .orElseThrow(() -> new IllegalStateException("Couldn't find a point next to the vacuum's position"));
-      var point2 = scaffolding.stream()
-          .filter(p -> Math.abs(p.x - point1.x) + Math.abs(p.y - point1.y) == 1)
-          .findAny()
-          .orElseThrow(() -> new IllegalStateException("Couldn't find a point adjacent to vacuum's first move"));
-      var desiredDirection = Direction.getLineDirection(vacuumPosition, point1, point2);
-      return Turn.of(vacuumDirection, desiredDirection);
+      var desiredDirection = Direction.fromSegment(vacuumPosition, scaffoldingStart);
+      return vacuumDirection.turn(desiredDirection);
     }
 
     @VisibleForTesting
@@ -242,105 +240,19 @@ public class Puzzle17 extends AbstractPuzzle {
     }
   }
 
-  private enum Direction {
-    UP(0, -1),
-    DOWN(0, 1),
-    LEFT(-1, 0),
-    RIGHT(1, 0);
-
-    private final int dx;
-    private final int dy;
-
-    Direction(int dx, int dy) {
-      this.dx = dx;
-      this.dy = dy;
-    }
-
-    private Point move(Point point) {
-      return new Point(point.x + dx, point.y + dy);
-    }
-
-    private static boolean isStraightLine(List<Point> points) {
-      return points.stream().map(p -> p.x).distinct().count() == 1
-          || points.stream().map(p -> p.y).distinct().count() == 1;
-    }
-
-    private static Direction getLineDirection(Point... points) {
-      return getLineDirection(Arrays.stream(points).collect(Collectors.toList()));
-    }
-
-    private static Direction getLineDirection(List<Point> points) {
-      if (!isStraightLine(points)) {
-        return null;
-      }
-
-      int dx = points.get(points.size() - 1).x - points.get(0).x;
-      int dy = points.get(points.size() - 1).y - points.get(0).y;
-
-      if (dy > 0) return UP;
-      if (dy < 0) return DOWN;
-      if (dx > 0) return RIGHT;
-      if (dx < 0) return LEFT;
-
-      throw new IllegalStateException("Line has no 2 distinct points");
-    }
-
-    private Direction turn(Turn turn) {
-      switch (this) {
-        case UP:
-          if (turn == Turn.LEFT) return LEFT;
-          if (turn == Turn.RIGHT) return RIGHT;
-          break;
-        case DOWN:
-          if (turn == Turn.LEFT) return RIGHT;
-          if (turn == Turn.RIGHT) return LEFT;
-          break;
-        case LEFT:
-          if (turn == Turn.LEFT) return DOWN;
-          if (turn == Turn.RIGHT) return UP;
-          break;
-        case RIGHT:
-          if (turn == Turn.LEFT) return UP;
-          if (turn == Turn.RIGHT) return DOWN;
-          break;
-      }
-      throw new UnsupportedOperationException("Unknown direction or turn");
+  private static Point move(Point point, Direction direction) {
+    switch (direction) {
+      case NORTH: return new Point(point.x, point.y - 1); // North on our map means the y value goes down
+      case SOUTH: return new Point(point.x, point.y + 1); // South on our map means the y value goes up
+      default: return direction.move(point);
     }
   }
 
-  private enum Turn {
-    LEFT,
-    RIGHT;
-
-    private static Turn of(Direction start, Direction end) {
-      switch (start) {
-        case UP:
-          if (end == Direction.LEFT) return LEFT;
-          if (end == Direction.RIGHT) return RIGHT;
-          break;
-        case DOWN:
-          if (end == Direction.RIGHT) return LEFT;
-          if (end == Direction.LEFT) return RIGHT;
-          break;
-        case LEFT:
-          if (end == Direction.DOWN) return LEFT;
-          if (end == Direction.UP) return RIGHT;
-          break;
-        case RIGHT:
-          if (end == Direction.UP) return LEFT;
-          if (end == Direction.DOWN) return RIGHT;
-          break;
-      }
-      throw new IllegalStateException("Direction change is not a 90 degree turn (i.e. 0 degrees or 180 degrees)");
+  private static String turnString(Turn turn) {
+    switch (turn) {
+      case LEFT: return "L";
+      case RIGHT: return "R";
     }
-
-    @Override
-    public String toString() {
-      switch (this) {
-        case LEFT: return "L";
-        case RIGHT: return "R";
-      }
-      throw new UnsupportedOperationException("Turn cannot be converted into String");
-    }
+    throw new UnsupportedOperationException("Unknown turn type " + turn);
   }
 }

@@ -1,6 +1,7 @@
 package net.akaritakai.aoc2019;
 
 import com.google.common.annotations.VisibleForTesting;
+import net.akaritakai.aoc2019.intcode.IntcodeVm;
 
 import java.awt.*;
 import java.util.ArrayList;

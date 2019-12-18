@@ -1,21 +1,22 @@
 package net.akaritakai.aoc2019;
 
 import com.google.common.annotations.VisibleForTesting;
+import net.akaritakai.aoc2019.geom2d.Direction;
+import net.akaritakai.aoc2019.geom2d.Point;
+import net.akaritakai.aoc2019.intcode.IntcodeVm;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
-import java.awt.*;
 import java.io.Closeable;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
-import static net.akaritakai.aoc2019.Puzzle15.Direction.*;
+
 
 public class Puzzle15 extends AbstractPuzzle {
 
@@ -69,7 +70,7 @@ public class Puzzle15 extends AbstractPuzzle {
     }
 
     public State move(Direction direction) {
-      _input.add(direction.getValue());
+      _input.add(ordinal(direction));
       var state = State.of(sneaked(_output::take).get());
       if (state != State.WALL) {
         _location = direction.move(_location);
@@ -101,10 +102,10 @@ public class Puzzle15 extends AbstractPuzzle {
     ShipState(DroidState droid) {
       _droid = droid;
       _ship.addVertex(droid.getLocation());
-      _stack.push(NORTH.move(droid.getLocation()));
-      _stack.push(SOUTH.move(droid.getLocation()));
-      _stack.push(EAST.move(droid.getLocation()));
-      _stack.push(WEST.move(droid.getLocation()));
+      _stack.push(Direction.NORTH.move(droid.getLocation()));
+      _stack.push(Direction.SOUTH.move(droid.getLocation()));
+      _stack.push(Direction.EAST.move(droid.getLocation()));
+      _stack.push(Direction.WEST.move(droid.getLocation()));
     }
 
     private synchronized void exploreShip() {
@@ -191,7 +192,7 @@ public class Puzzle15 extends AbstractPuzzle {
               .map(pointsInPath -> {
                 var path = new ArrayList<Direction>();
                 for (var i = 0; i < pointsInPath.size() - 1; i++) {
-                  path.add(Direction.of(pointsInPath.get(i), pointsInPath.get(i + 1)));
+                  path.add(Direction.fromSegment(pointsInPath.get(i), pointsInPath.get(i + 1)));
                 }
                 path.add(direction.opposite());
                 return path;
@@ -223,48 +224,13 @@ public class Puzzle15 extends AbstractPuzzle {
     }
   }
 
-  enum Direction {
-    NORTH(0, 1, 1),
-    SOUTH(0, -1, 2),
-    WEST(-1, 0, 3),
-    EAST(1, 0, 4);
-
-    private final int dx;
-    private final int dy;
-    private final long value;
-
-    private long getValue() {
-      return value;
+  private static long ordinal(net.akaritakai.aoc2019.geom2d.Direction direction) {
+    switch (direction) {
+      case NORTH: return 1;
+      case SOUTH: return 2;
+      case WEST: return 3;
+      case EAST: return 4;
     }
-
-    Direction(int dx, int dy, long value) {
-      this.dx = dx;
-      this.dy = dy;
-      this.value = value;
-    }
-
-    @VisibleForTesting
-    Point move(Point point) {
-      return new Point(point.x + dx, point.y + dy);
-    }
-
-    private Direction opposite() {
-      switch (this) {
-        case NORTH: return SOUTH;
-        case SOUTH: return NORTH;
-        case WEST: return EAST;
-        case EAST: return WEST;
-      }
-      throw new IllegalStateException("Invalid direction");
-    }
-
-    private static Direction of(Point start, Point end) {
-      var dx = end.x - start.x;
-      var dy = end.y - start.y;
-      return Arrays.stream(Direction.values())
-          .filter(direction -> direction.dx == dx && direction.dy == dy)
-          .findAny()
-          .orElseThrow(() -> new IllegalArgumentException("Points are not adjacent"));
-    }
+    throw new UnsupportedOperationException("Unknown direction: " + direction);
   }
 }

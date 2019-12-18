@@ -1,9 +1,9 @@
 package net.akaritakai.aoc2019;
 
 import com.google.common.collect.Sets;
+import net.akaritakai.aoc2019.geom2d.Direction;
+import net.akaritakai.aoc2019.geom2d.Point;
 
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,7 +22,7 @@ public class Puzzle03 extends AbstractPuzzle {
   public String solvePart1() {
     Set<Point> intersections = getAllIntersections(getWires());
     var minDistance = intersections.stream()
-        .mapToInt(p -> Math.abs(p.x) + Math.abs(p.y))
+        .mapToLong(p -> Math.abs(p.x) + Math.abs(p.y))
         .min()
         .orElseThrow(() -> new IllegalArgumentException("No points available"));
     return String.valueOf(minDistance);
@@ -58,37 +58,14 @@ public class Puzzle03 extends AbstractPuzzle {
     private Map<Point, Integer> _pointLengthMap = new HashMap<>();
 
     private Wire(String instructionString) {
-      var x = 0;
-      var y = 0;
+      var position = new Point(0, 0);
       var length = 0;
       for (String instruction : instructionString.split(",")) {
-        var direction = instruction.substring(0, 1);
+        var direction = getDirection(instruction.substring(0, 1));
         var distance = Integer.parseInt(instruction.substring(1));
-        switch (direction) {
-          case "U": {
-            while (distance-- > 0) {
-              _pointLengthMap.put(new Point(x, ++y), ++length);
-            }
-            break;
-          }
-          case "D": {
-            while (distance-- > 0) {
-              _pointLengthMap.put(new Point(x, --y), ++length);
-            }
-            break;
-          }
-          case "L": {
-            while (distance-- > 0) {
-              _pointLengthMap.put(new Point(--x, y), ++length);
-            }
-            break;
-          }
-          case "R": {
-            while (distance-- > 0) {
-              _pointLengthMap.put(new Point(++x, y), ++length);
-            }
-            break;
-          }
+        while (distance-- > 0) {
+          position = direction.move(position);
+          _pointLengthMap.put(position, ++length);
         }
       }
     }
@@ -99,6 +76,16 @@ public class Puzzle03 extends AbstractPuzzle {
 
     private int getWireLength(Point point) {
       return _pointLengthMap.getOrDefault(point, 0);
+    }
+
+    private static Direction getDirection(String instruction) {
+      switch (instruction) {
+        case "U": return Direction.NORTH;
+        case "D": return Direction.SOUTH;
+        case "L": return Direction.WEST;
+        case "R": return Direction.EAST;
+      }
+      throw new IllegalArgumentException("Invalid direction " + instruction);
     }
   }
 }

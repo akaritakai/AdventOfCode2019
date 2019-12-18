@@ -1,18 +1,18 @@
 package net.akaritakai.aoc2019;
 
 import com.google.common.annotations.VisibleForTesting;
+import net.akaritakai.aoc2019.geom2d.Direction;
+import net.akaritakai.aoc2019.geom2d.Image;
+import net.akaritakai.aoc2019.geom2d.Point;
+import net.akaritakai.aoc2019.geom2d.Turn;
+import net.akaritakai.aoc2019.intcode.IntcodeVm;
 
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
 import static net.akaritakai.aoc2019.Puzzle11.Color.DEFAULT;
@@ -49,33 +49,15 @@ public class Puzzle11 extends AbstractPuzzle {
   }
 
   private String renderImage(Map<Point, Color> hull) {
-    var area = getVisibleDimensions(hull);
-    return IntStream.rangeClosed(area.y, area.y + area.height).boxed()
-        .sorted(Collections.reverseOrder()) // Hull image is drawn upside down
-        .map(y -> IntStream.rangeClosed(area.x, area.x + area.width).boxed()
-            .map(x -> new Point(x, y))
-            .map(point -> hull.getOrDefault(point, DEFAULT))
-            .map(color -> color == DEFAULT ? " " : "#")
-            .collect(Collectors.joining()))
-        .collect(Collectors.joining("\n"));
-  }
-
-  private Rectangle getVisibleDimensions(Map<Point, Color> hull) {
-    /* Points are visible if they "stand out" from the hull's default color (i.e. are not the default color) */
-    Predicate<Map.Entry<Point, Color>> isVisible = e -> e.getValue() != DEFAULT;
-    Supplier<Stream<Point>> visiblePoints = () -> hull.entrySet().stream().filter(isVisible).map(Map.Entry::getKey);
-
-    var minHeight = visiblePoints.get().mapToInt(point -> point.y).min().orElseThrow();
-    var maxHeight = visiblePoints.get().mapToInt(point -> point.y).max().orElseThrow();
-    var minWidth = visiblePoints.get().mapToInt(point -> point.x).min().orElseThrow();
-    var maxWidth = visiblePoints.get().mapToInt(point -> point.x).max().orElseThrow();
-    return new Rectangle(minWidth, minHeight, maxWidth - minWidth, maxHeight - minHeight);
+    Function<Point, String> renderer = point -> hull.get(point) == DEFAULT ? " " : "#";
+    Predicate<Point> isVisible = point -> hull.get(point) != DEFAULT; // Non-default hull squares stand out
+    return Image.renderImageUpsideDown(Image.imageSize(hull.keySet(), isVisible), renderer);
   }
 
   @VisibleForTesting
   static class RobotState {
     @VisibleForTesting
-    static final Direction STARTING_DIRECTION = Direction.UP;
+    static final Direction STARTING_DIRECTION = Direction.NORTH;
     @VisibleForTesting
     static final Point ORIGIN = new Point(0, 0);
 
@@ -100,7 +82,7 @@ public class Puzzle11 extends AbstractPuzzle {
       if (_robotOutput.size() == 2) {
         _hull.put(_position, Color.of(_robotOutput.get(0))); // color the hull
         _painted.add(_position); // mark that we colored this position
-        _direction = _direction.turn(Turn.of(_robotOutput.get(1))); // turn the robot
+        _direction = _direction.turn(turn(_robotOutput.get(1))); // turn the robot
         _position = _direction.move(_position); // move forward one space
         _robotInput.add(_hull.getOrDefault(_position, DEFAULT).getValue()); // signal the program
         _robotOutput.clear();
@@ -147,67 +129,11 @@ public class Puzzle11 extends AbstractPuzzle {
     }
   }
 
-  @VisibleForTesting
-  enum Direction {
-    UP (0, 1),
-    DOWN (0, -1),
-    LEFT (-1, 0),
-    RIGHT (1, 0);
-
-    private final int _dx;
-    private final int _dy;
-
-    Direction(int dx, int dy) {
-      _dx = dx;
-      _dy = dy;
+  private static Turn turn(long value) {
+    switch (Math.toIntExact(value)) {
+      case 0: return Turn.LEFT;
+      case 1: return Turn.RIGHT;
     }
-
-    private Point move(Point point) {
-      return new Point(point.x + _dx, point.y + _dy);
-    }
-
-    private Direction turn(Turn turn) {
-      switch (turn) {
-        case LEFT:
-          switch (this) {
-            case UP: return LEFT;
-            case DOWN: return RIGHT;
-            case LEFT: return DOWN;
-            case RIGHT: return UP;
-          }
-          break;
-        case RIGHT:
-          switch (this) {
-            case UP: return RIGHT;
-            case DOWN: return LEFT;
-            case LEFT: return UP;
-            case RIGHT: return DOWN;
-          }
-          break;
-      }
-      throw new IllegalArgumentException("Unknown turn signal");
-    }
-  }
-
-  public enum Turn {
-    LEFT (0),
-    RIGHT (1);
-
-    public final long _value;
-
-    Turn(long value) {
-      _value = value;
-    }
-
-    public long getValue() {
-      return _value;
-    }
-
-    public static Turn of(long value) {
-      return Arrays.stream(Turn.values())
-          .filter(color -> color.getValue() == value)
-          .findAny()
-          .orElseThrow(()  -> new IllegalArgumentException("Unknown turn value: " + value));
-    }
+    throw new IllegalArgumentException("Unknown turn value: " + value);
   }
 }

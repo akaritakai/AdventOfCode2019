@@ -1,4 +1,4 @@
-package net.akaritakai.aoc2019;
+package net.akaritakai.aoc2019.intcode;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;

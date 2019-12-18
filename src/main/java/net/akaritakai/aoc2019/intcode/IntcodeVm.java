@@ -1,4 +1,4 @@
-package net.akaritakai.aoc2019;
+package net.akaritakai.aoc2019.intcode;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;

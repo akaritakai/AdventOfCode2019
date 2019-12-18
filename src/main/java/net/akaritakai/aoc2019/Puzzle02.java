@@ -1,5 +1,7 @@
 package net.akaritakai.aoc2019;
 
+import net.akaritakai.aoc2019.intcode.IntcodeVm;
+
 public class Puzzle02 extends AbstractPuzzle {
 
   public Puzzle02(String puzzleInput) {

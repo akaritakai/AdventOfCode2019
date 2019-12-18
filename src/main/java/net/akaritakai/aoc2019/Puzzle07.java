@@ -2,6 +2,7 @@ package net.akaritakai.aoc2019;
 
 import com.google.common.collect.Collections2;
 import com.rainerhahnekamp.sneakythrow.functional.SneakyConsumer;
+import net.akaritakai.aoc2019.intcode.IntcodeVm;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;

@@ -1,6 +1,9 @@
 package net.akaritakai.aoc2019;
 
-import java.util.*;
+import net.akaritakai.aoc2019.geom2d.Image;
+
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -39,20 +42,7 @@ public class Puzzle08 extends AbstractPuzzle {
             .reduce((above, below) -> above == 2 ? below : above)
             .orElseThrow(() -> new IllegalStateException("No pixel data returned")))
         .collect(Collectors.toList());
-    return "\n" + renderImage(pixels);
-  }
-
-  private String renderImage(List<Integer> pixels) {
-    var it = pixels.iterator();
-    return IntStream.range(0, IMAGE_HEIGHT).mapToObj(y ->
-        IntStream.range(0, IMAGE_WIDTH).mapToObj(x -> {
-          switch (it.next()) {
-            case 0: return " ";
-            case 1: return "#";
-            default: throw new IllegalStateException("Invalid color");
-          }
-        }).collect(Collectors.joining()))
-        .collect(Collectors.joining("\n"));
+    return "\n" + Image.renderImage(pixels, pixel -> pixel == 1 ? "#" : " ", IMAGE_WIDTH, IMAGE_HEIGHT);
   }
 
   private List<List<Integer>> getLayers() {

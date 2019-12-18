@@ -1,16 +1,16 @@
 package net.akaritakai.aoc2019;
 
-import net.akaritakai.aoc2019.Puzzle15.Direction;
 import net.akaritakai.aoc2019.Puzzle15.DroidState;
 import net.akaritakai.aoc2019.Puzzle15.ShipState;
 import net.akaritakai.aoc2019.Puzzle15.State;
+import net.akaritakai.aoc2019.geom2d.Direction;
+import net.akaritakai.aoc2019.geom2d.Point;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.awt.*;
 import java.util.Set;
 
-import static net.akaritakai.aoc2019.Puzzle15.Direction.*;
+import static net.akaritakai.aoc2019.geom2d.Direction.*;
 
 
 public class TestPuzzle15 extends BasePuzzleTest {
@@ -55,7 +55,7 @@ public class TestPuzzle15 extends BasePuzzleTest {
 
   private static Point from(Direction... directions) {
     var point = DroidState.STARTING_POSITION;
-    for (Direction direction : directions) {
+    for (var direction : directions) {
       point = direction.move(point);
     }
     return point;
@@ -73,7 +73,7 @@ public class TestPuzzle15 extends BasePuzzleTest {
 
     @Override
     public State move(Direction direction) {
-      Point p = direction.move(_location);
+      var p = direction.move(_location);
       if (p.equals(_oxygen)) {
         _location = p;
         return State.OXYGEN_SYSTEM;
