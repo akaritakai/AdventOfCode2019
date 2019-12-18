@@ -125,6 +125,15 @@ public class TestPuzzle18 extends BasePuzzleTest {
 
   @Test
   public void testPart2Example5() {
+    // Tricky pitfall provided by /u/AlphaDart1337
+    // https://www.reddit.com/r/adventofcode/comments/ec8090/2019_day_18_solutions/fb9whyt/
+
+    var longPath = 24; // One of the robots needs to walk around the door to get the key
+    var shortPath = 14; // The remaining robot can take the direct path since the door is open
+
+    // The idea is that it is not possible to apply solutions to all four vaults independently and sum up the results.
+    // An incorrect implementation might calculate longPath + longPath
+    // But the correct implementation will calculate longPath + shortPath
     var puzzle = new Puzzle18(
         "#################################\n" +
             "#...............#...............#\n" +
@@ -139,8 +148,6 @@ public class TestPuzzle18 extends BasePuzzleTest {
             "#...............#...............#\n" +
             "#...............#...............#\n" +
             "#################################");
-    var longPath = 24; // One of the robots needs to walk around the door to get the key
-    var shortPath = 14; // The remaining robot can take the direct path since the door is open
     Assert.assertEquals(puzzle.solvePart2(), String.valueOf(longPath + shortPath));
   }
 
