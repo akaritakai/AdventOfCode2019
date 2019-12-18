@@ -25,13 +25,13 @@ public class Puzzle18 extends AbstractPuzzle {
   @Override
   public String solvePart1() {
     var vault = new Vault(getPuzzleInput(), false);
-    return String.valueOf(vault.minCollectionPath());
+    return String.valueOf(vault.minKeyCollectionPathLength());
   }
 
   @Override
   public String solvePart2() {
     var vault = new Vault(getPuzzleInput(), true);
-    return String.valueOf(vault.minCollectionPath());
+    return String.valueOf(vault.minKeyCollectionPathLength());
   }
 
   private static class Vault {
@@ -94,12 +94,12 @@ public class Puzzle18 extends AbstractPuzzle {
       _graph = buildGraph(tunnels, irreducible);
     }
 
-    private long minCollectionPath() {
+    private long minKeyCollectionPathLength() {
       var memo = new Memo(_entrances, _doorsAndKeys.keys);
-      return (long) minCollectionPath(memo);
+      return (long) minKeyCollectionPathLength(memo);
     }
 
-    private double minCollectionPath(Memo input) {
+    private double minKeyCollectionPathLength(Memo input) {
       if (input.remainingKeys.isEmpty()) {
         return 0d;
       }
@@ -110,7 +110,7 @@ public class Puzzle18 extends AbstractPuzzle {
 
       var minCost = Double.MAX_VALUE;
       for (int i = 0; i < input.robots.size(); i++) {
-        var cost = minCollectionPath(input, i);
+        var cost = minKeyCollectionPathLength(input, i);
         minCost = Math.min(cost, minCost);
       }
 
@@ -119,7 +119,7 @@ public class Puzzle18 extends AbstractPuzzle {
       return minCost;
     }
 
-    private double minCollectionPath(Memo input, int robotIndex) {
+    private double minKeyCollectionPathLength(Memo input, int robotIndex) {
       // Get the reachable keys and path costs
       var costs = keyCosts(input.remainingKeys, input.robots.get(robotIndex));
 
@@ -136,7 +136,7 @@ public class Puzzle18 extends AbstractPuzzle {
 
         // Compute the remaining path
         var memo = new Memo(robots, remainingKeys);
-        var pathCost = cost + minCollectionPath(memo);
+        var pathCost = cost + minKeyCollectionPathLength(memo);
 
         minCost = Math.min(minCost, pathCost);
       }
@@ -247,7 +247,10 @@ public class Puzzle18 extends AbstractPuzzle {
 
     private static boolean reduceVertex(Graph<Point, DefaultWeightedEdge> graph, Point vertex) {
       if (graph.degreeOf(vertex) == 2) {
-        // Vertex has 2 edges and can be reduced
+        // Vertex degree 2 and can be reduced i.e.
+        //     x <---m---> y <---n---> z
+        // can be reduced to
+        //     x <---m+n---> z
 
         // Perform the replacement
         var weight = 0; // Weight of our new edge
