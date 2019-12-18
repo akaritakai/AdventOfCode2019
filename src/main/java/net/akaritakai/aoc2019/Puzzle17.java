@@ -11,6 +11,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import static net.akaritakai.aoc2019.geom2d.Turn.LEFT;
+import static net.akaritakai.aoc2019.geom2d.Turn.RIGHT;
+
 public class Puzzle17 extends AbstractPuzzle {
 
   public Puzzle17(String puzzleInput) {
@@ -106,14 +109,21 @@ public class Puzzle17 extends AbstractPuzzle {
       directions = new ArrayList<>();
       var explored = new HashSet<Point>();
 
-      var turn = getFirstTurn();
-      vacuumDirection = vacuumDirection.turn(turn);
-      directions.add(turnString(turn));
+      // Turn the vacuum toward the scaffolding
+      var scaffoldingStart = scaffolding.stream()
+          .filter(p -> Math.abs(p.x - vacuumPosition.x) + Math.abs(p.y - vacuumPosition.y) == 1)
+          .findAny()
+          .orElseThrow(() -> new IllegalStateException("Couldn't find a point next to the vacuum's position"));
+      var direction = Direction.fromSegment(vacuumPosition, scaffoldingStart);
+      var turn = vacuumDirection.turn(direction);
+      vacuumDirection = direction;
+      directions.add(serialize(turn));
+
       while (explored.size() < scaffolding.size()) {
         // Try to go down the path as far as we can go
         var pathLength = 0;
         var forward = move(vacuumPosition, vacuumDirection);
-        while (scaffolding.contains(forward)) { // if the scaffolding contains this
+        while (scaffolding.contains(forward)) { // if the scaffolding contains the path forward
           vacuumPosition = forward; // move our vacuum
           explored.add(forward); // mark the path as explored
           pathLength++; // increment the path length
@@ -123,17 +133,18 @@ public class Puzzle17 extends AbstractPuzzle {
         // We've gone down the path as far as we can go
         directions.add(String.valueOf(pathLength));
 
+        // Turn towards the next length of scaffolding
         if (explored.size() < scaffolding.size()) {
-          var direction = vacuumDirection.turn(Turn.LEFT);
+          direction = vacuumDirection.turn(LEFT);
           if (scaffolding.contains(move(vacuumPosition, direction))) {
             vacuumDirection = direction;
-            directions.add(turnString(Turn.LEFT));
+            directions.add(serialize(LEFT));
             continue;
           }
-          direction = vacuumDirection.turn(Turn.RIGHT);
+          direction = vacuumDirection.turn(RIGHT);
           if (scaffolding.contains(move(vacuumPosition, direction))) {
             vacuumDirection = direction;
-            directions.add(turnString(Turn.RIGHT));
+            directions.add(serialize(RIGHT));
             continue;
           }
           throw new IllegalStateException("Scaffolding does not accommodate a turn right or left");
@@ -141,15 +152,6 @@ public class Puzzle17 extends AbstractPuzzle {
       }
 
       return Collections.unmodifiableList(directions);
-    }
-
-    private Turn getFirstTurn() {
-      var scaffoldingStart = scaffolding.stream()
-          .filter(p -> Math.abs(p.x - vacuumPosition.x) + Math.abs(p.y - vacuumPosition.y) == 1)
-          .findAny()
-          .orElseThrow(() -> new IllegalStateException("Couldn't find a point next to the vacuum's position"));
-      var desiredDirection = Direction.fromSegment(vacuumPosition, scaffoldingStart);
-      return vacuumDirection.turn(desiredDirection);
     }
 
     private static Point move(Point point, Direction direction) {
@@ -160,7 +162,7 @@ public class Puzzle17 extends AbstractPuzzle {
       }
     }
 
-    private static String turnString(Turn turn) {
+    private static String serialize(Turn turn) {
       switch (turn) {
         case LEFT: return "L";
         case RIGHT: return "R";
@@ -173,7 +175,11 @@ public class Puzzle17 extends AbstractPuzzle {
       if (inputSequence != null) {
         return inputSequence;
       }
-      var input = new ArrayList<>(getDirections());
+      inputSequence = findInputSequence(new ArrayList<>(getDirections()));
+      return inputSequence;
+    }
+
+    private static String findInputSequence(List<String> input) {
       for (var aLength = input.size(); aLength >= 0; aLength--) {
         var a = input.subList(input.size() - aLength, input.size());
         if (serializedSize(a) > 20) {
@@ -197,12 +203,11 @@ public class Puzzle17 extends AbstractPuzzle {
               if (serializedSize(mainRoutine) > 20) {
                 continue;
               }
-              inputSequence = String.join(",", mainRoutine) + "\n"
+              return String.join(",", mainRoutine) + "\n"
                   + String.join(",", a) + "\n"
                   + String.join(",", b) + "\n"
                   + String.join(",", c) + "\n"
                   + "n\n";
-              return inputSequence;
             }
           }
         }
