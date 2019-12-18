@@ -226,6 +226,10 @@ public class Puzzle18 extends AbstractPuzzle {
     }
 
     private static void reduceGraph(Graph<Point, DefaultWeightedEdge> graph, Set<Point> irreducibleVertices) {
+      // The idea of reducing the graph (removing vertices of degree 2 and combining their edges into a single weighted
+      // edge) comes from /u/kroppeb
+      // https://www.reddit.com/r/adventofcode/comments/ec8090/2019_day_18_solutions/fb9wkit/
+
       var modified = true;
       while (modified) {
         modified = false;
