@@ -152,6 +152,22 @@ public class Puzzle17 extends AbstractPuzzle {
       return vacuumDirection.turn(desiredDirection);
     }
 
+    private static Point move(Point point, Direction direction) {
+      switch (direction) {
+        case NORTH: return new Point(point.x, point.y - 1); // North on our map means the y value goes down
+        case SOUTH: return new Point(point.x, point.y + 1); // South on our map means the y value goes up
+        default: return direction.move(point);
+      }
+    }
+
+    private static String turnString(Turn turn) {
+      switch (turn) {
+        case LEFT: return "L";
+        case RIGHT: return "R";
+      }
+      throw new UnsupportedOperationException("Unknown turn type " + turn);
+    }
+
     @VisibleForTesting
     synchronized String findInputSequence() {
       if (inputSequence != null) {
@@ -238,21 +254,5 @@ public class Puzzle17 extends AbstractPuzzle {
       var newLineSize = 1;
       return tokensSize + commasSize + newLineSize;
     }
-  }
-
-  private static Point move(Point point, Direction direction) {
-    switch (direction) {
-      case NORTH: return new Point(point.x, point.y - 1); // North on our map means the y value goes down
-      case SOUTH: return new Point(point.x, point.y + 1); // South on our map means the y value goes up
-      default: return direction.move(point);
-    }
-  }
-
-  private static String turnString(Turn turn) {
-    switch (turn) {
-      case LEFT: return "L";
-      case RIGHT: return "R";
-    }
-    throw new UnsupportedOperationException("Unknown turn type " + turn);
   }
 }
