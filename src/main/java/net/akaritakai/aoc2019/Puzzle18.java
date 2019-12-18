@@ -1,18 +1,15 @@
 package net.akaritakai.aoc2019;
 
-import com.google.common.collect.Sets;
 import net.akaritakai.aoc2019.geom2d.Direction;
 import net.akaritakai.aoc2019.geom2d.Point;
 import org.jgrapht.Graph;
-import org.jgrapht.alg.connectivity.ConnectivityInspector;
+import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DefaultUndirectedGraph;
+import org.jgrapht.graph.DefaultUndirectedWeightedGraph;
+import org.jgrapht.graph.DefaultWeightedEdge;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class Puzzle18 extends AbstractPuzzle {
 
@@ -27,159 +24,40 @@ public class Puzzle18 extends AbstractPuzzle {
 
   @Override
   public String solvePart1() {
-    Vault vault = new Vault(getPuzzleInput());
-    return String.valueOf(vault.minKeyCollectionCost(vault._entrance, vault._keys.keySet()));
+    var vault = new Vault(getPuzzleInput(), false);
+    return String.valueOf(vault.minCollectionPath());
   }
 
   @Override
   public String solvePart2() {
-    Vault2 vault2 = new Vault2(getPuzzleInput());
-    KeyCollectionCostInput2 input = new KeyCollectionCostInput2(vault2._entrance1, vault2._entrance2,
-        vault2._entrance3, vault2._entrance4, vault2._keys.keySet());
-    return String.valueOf(vault2.minKeyCollectionCost(input));
+    var vault = new Vault(getPuzzleInput(), true);
+    return String.valueOf(vault.minCollectionPath());
   }
 
-  static class Vault {
-    private final Map<String, Point> _keys = new HashMap<>();
-    private final Map<String, Point> _doors = new HashMap<>();
-    private final Set<Point> _tunnels = new HashSet<>();
-    private Point _entrance;
+  private static class Vault {
+    private final Map<Set<Point>, Graph<Point, DefaultWeightedEdge>> _memoizedGraphs = new ConcurrentHashMap<>();
+    private final Map<Memo, Double> _memoizedCosts = new ConcurrentHashMap<>();
+    private final List<Point> _entrances;
+    private final DoorsAndKeys _doorsAndKeys;
+    private final Graph<Point, DefaultWeightedEdge> _graph;
 
-    private Vault(String maze) {
-      int x = 0;
-      int y = 0;
-      for (char c : maze.trim().toCharArray()) {
-        Point p = new Point(x, y);
-        if (c == '@') {
-          _entrance = p;
-        }
-        if (c >= 'a' && c <= 'z') {
-          _keys.put(String.valueOf(c), p);
-        }
-        if (c >= 'A' && c <= 'Z') {
-          _doors.put(String.valueOf(c), p);
-        }
-        if (c != '#' && c != '\n') {
-          _tunnels.add(p);
-        }
-        if (c == '\n') {
-          x = 0;
-          y++;
-        } else {
-          x++;
-        }
-      }
-    }
-
-    private final Map<KeyCollectionCostInput, Integer> _memo = new ConcurrentHashMap<>();
-
-    private int minKeyCollectionCost(Point location, Set<String> remainingKeys) {
-      if (remainingKeys.isEmpty()) {
-        return 0;
-      }
-      var memo = new KeyCollectionCostInput(location, remainingKeys);
-      if (_memo.containsKey(memo)) {
-        return _memo.get(memo);
-      }
-      var reachableKeys = reachableKeys(remainingKeys);
-      var dijkstra = new DijkstraShortestPath<>(graph(remainingKeys)).getPaths(location);
-      var result = reachableKeys.stream()
-          .mapToInt(key -> dijkstra.getPath(_keys.get(key)).getLength()
-              + minKeyCollectionCost(_keys.get(key), Sets.difference(remainingKeys, Set.of(key))))
-          .min()
-          .orElse(0);
-      _memo.put(memo, result);
-      return result;
-    }
-
-    private Set<String> reachableKeys(Set<String> remainingKeys) {
-      var graph = graph(remainingKeys);
-      var connectivity = new ConnectivityInspector<>(graph);
-      var reachable = remainingKeys.stream()
-          .filter(key -> connectivity.pathExists(_entrance, _keys.get(key)))
-          .collect(Collectors.toSet());
-
-      var dijkstra = new DijkstraShortestPath<>(graph).getPaths(_entrance);
-      var it1 = reachable.iterator();
-      while (it1.hasNext()) {
-        var key1 = it1.next();
-        var it2 = reachable.iterator();
-        while (it2.hasNext()) {
-          var key2 = it2.next();
-          if (key1.equals(key2)) {
-            continue;
-          }
-          if (dijkstra.getPath(_keys.get(key1)).getVertexList().contains(_keys.get(key2))) {
-            it1.remove(); // Key 1 is reachable only through Key 2
-            break;
-          }
-        }
-      }
-
-      return reachable;
-    }
-
-    private Graph<Point, DefaultEdge> graph(Set<String> remainingKeys) {
-      // Determine which doors are still closed to us
-      Set<String> unopenedDoors = remainingKeys.stream().map(String::toUpperCase).filter(_doors::containsKey).collect(Collectors.toSet());
-      Set<Point> doors = unopenedDoors.stream().map(_doors::get).collect(Collectors.toSet());
-
-      // Remove those edges on our graph
-      Graph<Point, DefaultEdge> graph = buildGraph();
-      for (Point door : doors) {
-        for (Point adjacent : adjacentPoints(door)) {
-          graph.removeEdge(door, adjacent);
-        }
-      }
-
-      return graph;
-    }
-
-    private Graph<Point, DefaultEdge> buildGraph() {
-      Graph<Point, DefaultEdge> graph = new DefaultUndirectedGraph<>(DefaultEdge.class);
-      _tunnels.forEach(graph::addVertex); // Add all vertices
-      _tunnels.forEach(point -> {
-        adjacentPoints(point).forEach(adjacent -> {
-          graph.addEdge(point, adjacent);
-        });
-      }); // Add all edges
-      return graph;
-    }
-
-    private Set<Point> adjacentPoints(Point point) {
-      return Arrays.stream(Direction.values())
-          .map(direction -> direction.move(point))
-          .filter(_tunnels::contains)
-          .collect(Collectors.toSet());
-    }
-  }
-
-  static class Vault2 {
-    private final Map<String, Point> _keys = new HashMap<>();
-    private final Map<String, Point> _doors = new HashMap<>();
-    private final Set<Point> _tunnels = new HashSet<>();
-    private Point _entrance1;
-    private Point _entrance2;
-    private Point _entrance3;
-    private Point _entrance4;
-
-    private Vault2(String maze) {
-      int x = 0;
-      int y = 0;
+    private Vault(String input, boolean part2) {
+      var x = 0;
+      var y = 0;
       Point entrance = null;
-      for (char c : maze.trim().toCharArray()) {
-        Point p = new Point(x, y);
+      var tunnels = new HashSet<Point>();
+      var doorsAndKeys = new HashMap<Character, Point>();
+      for (char c : input.trim().toCharArray()) {
+        var p = new Point(x, y);
         if (c == '@') {
           entrance = p;
         }
-        if (c >= 'a' && c <= 'z') {
-          _keys.put(String.valueOf(c), p);
+        if (Character.isAlphabetic(c)) {
+          doorsAndKeys.put(c, p);
         }
-        if (c >= 'A' && c <= 'Z') {
-          _doors.put(String.valueOf(c), p);
-        }
+        // All elements that aren't a wall or the next line are walkable
         if (c != '#' && c != '\n') {
-          _tunnels.add(p);
+          tunnels.add(p);
         }
         if (c == '\n') {
           x = 0;
@@ -188,186 +66,291 @@ public class Puzzle18 extends AbstractPuzzle {
           x++;
         }
       }
-      _tunnels.remove(Direction.NORTH.move(entrance));
-      _tunnels.remove(Direction.SOUTH.move(entrance));
-      _tunnels.remove(Direction.EAST.move(entrance));
-      _tunnels.remove(Direction.WEST.move(entrance));
-      _entrance1 = new Point(entrance.x - 1, entrance.y - 1);
-      _entrance2 = new Point(entrance.x - 1, entrance.y + 1);
-      _entrance3 = new Point(entrance.x + 1, entrance.y - 1);
-      _entrance4 = new Point(entrance.x + 1, entrance.y + 1);
+
+      _doorsAndKeys = new DoorsAndKeys(doorsAndKeys);
+      if (!part2) {
+        // Part 1: There's only one entrance and no tunnel modifications
+        _entrances = List.of(entrance);
+      } else {
+        // Part 2:
+        // Four entrances are added (one at each diagonal corner of the original entrance)
+        // The original entrance is removed along with its adjacent points
+        _entrances = List.of(
+            new Point(entrance.x - 1, entrance.y - 1),
+            new Point(entrance.x - 1, entrance.y + 1),
+            new Point(entrance.x + 1, entrance.y - 1),
+            new Point(entrance.x + 1, entrance.y + 1));
+        tunnels.remove(entrance);
+        tunnels.remove(Direction.NORTH.move(entrance));
+        tunnels.remove(Direction.SOUTH.move(entrance));
+        tunnels.remove(Direction.EAST.move(entrance));
+        tunnels.remove(Direction.WEST.move(entrance));
+      }
+
+      var irreducible = new HashSet<Point>();
+      irreducible.addAll(_entrances);
+      irreducible.addAll(_doorsAndKeys.doors);
+      irreducible.addAll(_doorsAndKeys.keys);
+      _graph = buildGraph(tunnels, irreducible);
     }
 
-    private final Map<KeyCollectionCostInput2, Long> _memo = new ConcurrentHashMap<>();
+    private long minCollectionPath() {
+      var memo = new Memo(_entrances, _doorsAndKeys.keys);
+      return (long) minCollectionPath(memo);
+    }
 
-    private long minKeyCollectionCost(KeyCollectionCostInput2 input) {
+    private double minCollectionPath(Memo input) {
       if (input.remainingKeys.isEmpty()) {
-        return 0;
-      }
-      if (_memo.containsKey(input)) {
-        return _memo.get(input);
+        return 0d;
       }
 
-      var graph = graph(input.remainingKeys);
+      if (_memoizedCosts.containsKey(input)) {
+        return _memoizedCosts.get(input);
+      }
 
-      var reachable1 = reachableKeys(input.robot1, input.remainingKeys);
-      var reachable2 = reachableKeys(input.robot2, input.remainingKeys);
-      var reachable3 = reachableKeys(input.robot3, input.remainingKeys);
-      var reachable4 = reachableKeys(input.robot4, input.remainingKeys);
+      var minCost = Double.MAX_VALUE;
+      for (int i = 0; i < input.robots.size(); i++) {
+        var cost = minCollectionPath(input, i);
+        minCost = Math.min(cost, minCost);
+      }
 
-      var dijkstra1 = new DijkstraShortestPath<>(graph).getPaths(input.robot1);
-      var dijkstra2 = new DijkstraShortestPath<>(graph).getPaths(input.robot2);
-      var dijkstra3 = new DijkstraShortestPath<>(graph).getPaths(input.robot3);
-      var dijkstra4 = new DijkstraShortestPath<>(graph).getPaths(input.robot4);
+      _memoizedCosts.put(input, minCost);
 
-      Function<String, KeyCollectionCostInput2> input1 = key ->
-          new KeyCollectionCostInput2(_keys.get(key), input.robot2, input.robot3, input.robot4, Sets.difference(input.remainingKeys, Set.of(key)));
-      Function<String, KeyCollectionCostInput2> input2 = key ->
-          new KeyCollectionCostInput2(input.robot1, _keys.get(key), input.robot3, input.robot4, Sets.difference(input.remainingKeys, Set.of(key)));
-      Function<String, KeyCollectionCostInput2> input3 = key ->
-          new KeyCollectionCostInput2(input.robot1, input.robot2, _keys.get(key), input.robot4, Sets.difference(input.remainingKeys, Set.of(key)));
-      Function<String, KeyCollectionCostInput2> input4 = key ->
-          new KeyCollectionCostInput2(input.robot1, input.robot2, input.robot3, _keys.get(key), Sets.difference(input.remainingKeys, Set.of(key)));
-
-      var result1 = reachable1.stream()
-          .mapToLong(key -> dijkstra1.getPath(_keys.get(key)).getLength() + minKeyCollectionCost(input1.apply(key)))
-          .min()
-          .orElse(Integer.MAX_VALUE);
-      var result2 = reachable2.stream()
-          .mapToLong(key -> dijkstra2.getPath(_keys.get(key)).getLength() + minKeyCollectionCost(input2.apply(key)))
-          .min()
-          .orElse(Integer.MAX_VALUE);
-      var result3 = reachable3.stream()
-          .mapToLong(key -> dijkstra3.getPath(_keys.get(key)).getLength() + minKeyCollectionCost(input3.apply(key)))
-          .min()
-          .orElse(Integer.MAX_VALUE);
-      var result4 = reachable4.stream()
-          .mapToLong(key -> dijkstra4.getPath(_keys.get(key)).getLength() + minKeyCollectionCost(input4.apply(key)))
-          .min()
-          .orElse(Integer.MAX_VALUE);
-
-      var result = Math.min(Math.min(Math.min(result1, result2), result3), result4);
-      _memo.put(input, result);
-      return result;
+      return minCost;
     }
 
-    private Set<String> reachableKeys(Point location, Set<String> remainingKeys) {
+    private double minCollectionPath(Memo input, int robotIndex) {
+      // Get the reachable keys and path costs
+      var costs = keyCosts(input.remainingKeys, input.robots.get(robotIndex));
+
+      var minCost = Double.MAX_VALUE;
+      for (Map.Entry<Point, Double> keyCost : costs.entrySet()) {
+        var key = keyCost.getKey();
+        var cost = keyCost.getValue();
+
+        // Move the robot to the key to collect it
+        var robots = new ArrayList<>(input.robots);
+        robots.set(robotIndex, key);
+        var remainingKeys = new HashSet<>(input.remainingKeys);
+        remainingKeys.remove(key);
+
+        // Compute the remaining path
+        var memo = new Memo(robots, remainingKeys);
+        var pathCost = cost + minCollectionPath(memo);
+
+        minCost = Math.min(minCost, pathCost);
+      }
+
+      return minCost;
+    }
+
+    private Map<Point, Double> keyCosts(Set<Point> remainingKeys, Point location) {
       var graph = graph(remainingKeys);
-      var connectivity = new ConnectivityInspector<>(graph);
-      var reachable = remainingKeys.stream()
-          .filter(key -> connectivity.pathExists(location, _keys.get(key)))
-          .collect(Collectors.toSet());
 
+      var pathCosts = new HashMap<Point, Double>();
       var dijkstra = new DijkstraShortestPath<>(graph).getPaths(location);
-      var it1 = reachable.iterator();
-      while (it1.hasNext()) {
-        var key1 = it1.next();
-        var it2 = reachable.iterator();
-        while (it2.hasNext()) {
-          var key2 = it2.next();
-          if (key1.equals(key2)) {
-            continue;
-          }
-          if (dijkstra.getPath(_keys.get(key1)).getVertexList().contains(_keys.get(key2))) {
-            it1.remove(); // Key 1 is reachable only through Key 2
-            break;
-          }
+      for (var key : remainingKeys) {
+        var path = dijkstra.getPath(key);
+        if (path != null && !pathObscured(path, remainingKeys)) {
+          pathCosts.put(key, path.getWeight());
         }
       }
-
-      return reachable;
+      return pathCosts;
     }
 
-    private Graph<Point, DefaultEdge> graph(Set<String> remainingKeys) {
-      // Determine which doors are still closed to us
-      Set<String> unopenedDoors = remainingKeys.stream().map(String::toUpperCase).filter(_doors::containsKey).collect(Collectors.toSet());
-      Set<Point> doors = unopenedDoors.stream().map(_doors::get).collect(Collectors.toSet());
-
-      // Remove those edges on our graph
-      Graph<Point, DefaultEdge> graph = buildGraph();
-      for (Point door : doors) {
-        for (Point adjacent : adjacentPoints(door)) {
-          graph.removeEdge(door, adjacent);
+    private static boolean pathObscured(GraphPath<Point, DefaultWeightedEdge> path, Set<Point> remainingKeys) {
+      // We stay that a path is "obscured" if an earlier key is encountered before our destination key
+      var vertices = path.getVertexList();
+      // The first vertex won't contain a key (it's either our starting location or a previously collected key)
+      // The last vertex is our destination key which can't be obscured by itself
+      // So, we only need to search the path from 1 to n-1
+      for (int i = 1; i < vertices.size() - 1; i++) {
+        var vertex = vertices.get(i);
+        if (remainingKeys.contains(vertex)) {
+          return true;
         }
       }
+      return false;
+    }
+
+    private Graph<Point, DefaultWeightedEdge> graph(Set<Point> remainingKeys) {
+      if (_memoizedGraphs.containsKey(remainingKeys)) {
+        return _memoizedGraphs.get(remainingKeys);
+      }
+
+      var graph = copyGraph(_graph);
+      var closedDoors = _doorsAndKeys.closedDoors(remainingKeys);
+      for (Point door : closedDoors) {
+        graph.removeVertex(door);
+      }
+
+      _memoizedGraphs.put(remainingKeys, graph);
 
       return graph;
     }
 
-    private Graph<Point, DefaultEdge> buildGraph() {
-      Graph<Point, DefaultEdge> graph = new DefaultUndirectedGraph<>(DefaultEdge.class);
-      _tunnels.forEach(graph::addVertex); // Add all vertices
-      _tunnels.forEach(point -> {
-        adjacentPoints(point).forEach(adjacent -> {
-          graph.addEdge(point, adjacent);
+    private static Graph<Point, DefaultWeightedEdge> copyGraph(Graph<Point, DefaultWeightedEdge> graph) {
+      var newGraph = new DefaultUndirectedWeightedGraph<Point, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+      for (var vertex : graph.vertexSet()) {
+        for (var edge : graph.edgesOf(vertex)) {
+          var source = graph.getEdgeSource(edge);
+          var target = graph.getEdgeTarget(edge);
+          var weight = graph.getEdgeWeight(edge);
+
+          newGraph.addVertex(source);
+          newGraph.addVertex(target);
+          var newEdge = newGraph.addEdge(source, target);
+          if (newEdge != null) {
+            newGraph.setEdgeWeight(newEdge, weight);
+          }
+        }
+      }
+      return newGraph;
+    }
+
+    private static Graph<Point, DefaultWeightedEdge> buildGraph(Set<Point> tunnels, Set<Point> irreducibleVertices) {
+      var graph = new DefaultUndirectedWeightedGraph<Point, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+      // Add all vertices
+      tunnels.forEach(graph::addVertex);
+      // Add all edges
+      tunnels.forEach(point -> {
+        adjacentPoints(tunnels, point).forEach(adjacent -> {
+          var edge = graph.addEdge(point, adjacent);
+          if (edge != null) {
+            graph.setEdgeWeight(edge, 1);
+          }
         });
-      }); // Add all edges
+      });
+      reduceGraph(graph, irreducibleVertices);
       return graph;
     }
 
-    private Set<Point> adjacentPoints(Point point) {
-      return Arrays.stream(Direction.values())
-          .map(direction -> direction.move(point))
-          .filter(_tunnels::contains)
-          .collect(Collectors.toSet());
+    private static void reduceGraph(Graph<Point, DefaultWeightedEdge> graph, Set<Point> irreducibleVertices) {
+      var modified = true;
+      while (modified) {
+        modified = false;
+        for (var vertex : new HashSet<>(graph.vertexSet())) {
+          if (!graph.containsVertex(vertex)) {
+            continue; // This point was reduced already
+          }
+          if (irreducibleVertices.contains(vertex)) {
+            continue; // This vertex cannot be reduced
+          }
+          modified |= reduceVertex(graph, vertex);
+        }
+      }
+    }
+
+    private static boolean reduceVertex(Graph<Point, DefaultWeightedEdge> graph, Point vertex) {
+      if (graph.degreeOf(vertex) == 2) {
+        // Vertex has 2 edges and can be reduced
+
+        // Perform the replacement
+        var weight = 0; // Weight of our new edge
+        Point vertex1 = null; // Source of our new edge
+        Point vertex2 = null; // Target of our new edge
+        for (var edge : graph.edgesOf(vertex)) {
+          // Add the edge we're removing to the weight of our new edge
+          weight += graph.getEdgeWeight(edge);
+
+          // Find the vertex in the edge that isn't the one we're removing and bubble it up
+          var edgeVertex = graph.getEdgeSource(edge);
+          if (edgeVertex.equals(vertex)) {
+            edgeVertex = graph.getEdgeTarget(edge);
+          }
+          if (vertex1 == null) {
+            vertex1 = edgeVertex;
+          } else {
+            vertex2 = edgeVertex;
+          }
+        }
+
+        // Remove the reduced vertex and edges
+        graph.removeVertex(vertex);
+
+        // Create the new edge
+        var edge = graph.addEdge(vertex1, vertex2);
+        graph.setEdgeWeight(edge, weight);
+
+        return true;
+      }
+      return false;
+    }
+
+    private static Set<Point> adjacentPoints(Set<Point> tunnels, Point point) {
+      var points = new HashSet<Point>();
+      var p = Direction.NORTH.move(point);
+      if (tunnels.contains(p)) points.add(p);
+      p = Direction.SOUTH.move(point);
+      if (tunnels.contains(p)) points.add(p);
+      p = Direction.EAST.move(point);
+      if (tunnels.contains(p)) points.add(p);
+      p = Direction.WEST.move(point);
+      if (tunnels.contains(p)) points.add(p);
+      return points;
     }
   }
 
-  private static class KeyCollectionCostInput2 {
-    private final Point robot1;
-    private final Point robot2;
-    private final Point robot3;
-    private final Point robot4;
-    private final Set<String> remainingKeys;
+  private static class DoorsAndKeys {
+    private final Set<Point> doors = new HashSet<>();
+    private final Set<Point> keys = new HashSet<>();
+    private final Map<Point, Point> keyToDoor = new HashMap<>();
 
-    public KeyCollectionCostInput2(Point robot1, Point robot2, Point robot3, Point robot4, Set<String> remainingKeys) {
-      this.robot1 = robot1;
-      this.robot2 = robot2;
-      this.robot3 = robot3;
-      this.robot4 = robot4;
-      this.remainingKeys = remainingKeys;
+    private DoorsAndKeys(Map<Character, Point> doorsAndKeys) {
+      var doors = new Point[26];
+      var keys = new Point[26];
+      doorsAndKeys.forEach((c, point) -> {
+        if (c >= 'A' && c <= 'Z') {
+          doors[c - 'A'] = point; // Uppercase letters are doors
+        } else {
+          keys[c - 'a'] = point; // Lowercase letters are keys
+        }
+      });
+      for (int i = 0; i < 26; i++) {
+        var door = doors[i];
+        var key = keys[i];
+        if (door != null) {
+          this.doors.add(door);
+        }
+        if (key != null) {
+          this.keys.add(key);
+          if (door != null) {
+            keyToDoor.put(key, door);
+          }
+        }
+      }
+    }
+
+    private Set<Point> closedDoors(Set<Point> remainingKeys) {
+      Set<Point> closedDoors = new HashSet<>();
+      for (Point key : remainingKeys) {
+        var door = keyToDoor.get(key);
+        closedDoors.add(door);
+      }
+      return closedDoors;
+    }
+  }
+
+  private static class Memo {
+    private final List<Point> robots;
+    private final Set<Point> remainingKeys;
+
+    private Memo(List<Point> robots, Set<Point> remainingKeys) {
+      this.robots = Collections.unmodifiableList(robots);
+      this.remainingKeys = Collections.unmodifiableSet(remainingKeys);
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      KeyCollectionCostInput2 that = (KeyCollectionCostInput2) o;
-      return Objects.equals(robot1, that.robot1) &&
-          Objects.equals(robot2, that.robot2) &&
-          Objects.equals(robot3, that.robot3) &&
-          Objects.equals(robot4, that.robot4) &&
-          Objects.equals(remainingKeys, that.remainingKeys);
+      Memo memo = (Memo) o;
+      return Objects.equals(robots, memo.robots) && Objects.equals(remainingKeys, memo.remainingKeys);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(robot1, robot2, robot3, robot4, remainingKeys);
+      return Objects.hash(robots, remainingKeys);
     }
   }
-
-  private static class KeyCollectionCostInput {
-    private final Point point;
-    private final Set<String> remainingKeys;
-
-    public KeyCollectionCostInput(Point point, Set<String> remainingKeys) {
-      this.point = point;
-      this.remainingKeys = remainingKeys;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      KeyCollectionCostInput that = (KeyCollectionCostInput) o;
-      return Objects.equals(point, that.point) &&
-          Objects.equals(remainingKeys, that.remainingKeys);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(point, remainingKeys);
-    }
-  }
-
 }
