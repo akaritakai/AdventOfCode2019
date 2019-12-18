@@ -1,23 +1,22 @@
 package net.akaritakai.aoc2019.geom2d;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 public class Image {
 
   public static <T> String renderImage(Collection<T> objects, Function<T, String> renderer, long width, long height) {
-    var sb = new StringBuilder();
     var it = objects.iterator();
-    for (var y = 0L; y < height; y++) {
-      for (var x = 0L; x < width; x++) {
-        T element = it.hasNext() ? it.next() : null;
-        sb.append(renderer.apply(element));
-      }
-      if (y + 1 < height) sb.append('\n');
-    }
-    return sb.toString();
+    return LongStream.range(0, height).boxed()
+        .map(y -> LongStream.range(0, width).boxed()
+            .map(x -> renderer.apply(it.hasNext() ? it.next() : null))
+            .collect(Collectors.joining()))
+        .collect(Collectors.joining("\n"));
   }
 
   public static String renderImage(Set<Point> points, Function<Point, String> renderer) {
@@ -26,15 +25,12 @@ public class Image {
   }
 
   public static String renderImage(Rectangle imageSize, Function<Point, String> renderer) {
-    var sb = new StringBuilder();
-    for (var y = imageSize.y; y < imageSize.y + imageSize.height; y++) {
-      for (var x = imageSize.x; x < imageSize.x + imageSize.width; x++) {
-        var p = new Point(x, y);
-        sb.append(renderer.apply(p));
-      }
-      if (y + 1 < imageSize.y + imageSize.height) sb.append('\n');
-    }
-    return sb.toString();
+    return LongStream.range(imageSize.y, imageSize.y + imageSize.height).boxed()
+        .map(y -> LongStream.range(imageSize.x, imageSize.x + imageSize.width).boxed()
+            .map(x -> new Point(x, y))
+            .map(renderer::apply)
+            .collect(Collectors.joining()))
+        .collect(Collectors.joining("\n"));
   }
 
   public static String renderImageUpsideDown(Set<Point> points, Function<Point, String> renderer) {
@@ -43,15 +39,13 @@ public class Image {
   }
 
   public static String renderImageUpsideDown(Rectangle imageSize, Function<Point, String> renderer) {
-    var sb = new StringBuilder();
-    for (var y = imageSize.y + imageSize.height - 1; y >= imageSize.y; y--) {
-      for (var x = imageSize.x; x < imageSize.x + imageSize.width; x++) {
-        var p = new Point(x, y);
-        sb.append(renderer.apply(p));
-      }
-      if (y - 1 >= imageSize.y) sb.append('\n');
-    }
-    return sb.toString();
+    return LongStream.range(imageSize.y, imageSize.y + imageSize.height).boxed()
+        .sorted(Collections.reverseOrder())
+        .map(y -> LongStream.range(imageSize.x, imageSize.x + imageSize.width).boxed()
+            .map(x -> new Point(x, y))
+            .map(renderer::apply)
+            .collect(Collectors.joining()))
+        .collect(Collectors.joining("\n"));
   }
 
   public static Rectangle imageSize(Set<Point> visiblePoints) {

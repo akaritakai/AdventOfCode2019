@@ -19,22 +19,14 @@ public enum Direction {
   }
 
   public Direction turn(Turn turn) {
-    switch (turn) {
-      case LEFT:
-        switch (this) {
-          case NORTH: return WEST;
-          case SOUTH: return EAST;
-          case EAST: return NORTH;
-          case WEST: return SOUTH;
-        }
-      case RIGHT:
-        switch (this) {
-          case NORTH: return EAST;
-          case SOUTH: return WEST;
-          case EAST: return SOUTH;
-          case WEST: return NORTH;
-        }
-    }
+    if (this == NORTH && turn == Turn.LEFT) return WEST;
+    if (this == NORTH && turn == Turn.RIGHT) return EAST;
+    if (this == SOUTH && turn == Turn.LEFT) return EAST;
+    if (this == SOUTH && turn == Turn.RIGHT) return WEST;
+    if (this == EAST && turn == Turn.LEFT) return NORTH;
+    if (this == EAST && turn == Turn.RIGHT) return SOUTH;
+    if (this == WEST && turn == Turn.LEFT) return SOUTH;
+    if (this == WEST && turn == Turn.RIGHT) return NORTH;
     throw new UnsupportedOperationException("Unknown direction " + this + " and turn " + turn);
   }
 
@@ -61,12 +53,10 @@ public enum Direction {
   }
 
   public Direction opposite() {
-    switch (this) {
-      case NORTH: return SOUTH;
-      case SOUTH: return NORTH;
-      case EAST: return WEST;
-      case WEST: return EAST;
-    }
+    if (this == NORTH) return SOUTH;
+    if (this == SOUTH) return NORTH;
+    if (this == EAST) return WEST;
+    if (this == WEST) return EAST;
     throw new UnsupportedOperationException("Unknown direction " + this);
   }
 }
