@@ -48,20 +48,14 @@ public class Puzzle19 extends AbstractPuzzle {
       while (!pulled(x, y)) {
         x++;
       }
-      if (pulled(x, y - 99)
-          && pulled(x, y)
-          && pulled(x + 99, y - 99)
-          && pulled(x + 99, y)) {
-        return String.valueOf(10_000 * x + (y - 99));
+      if (pulled(x + 99, y - 99)) {
+        return String.valueOf((10_000 * x) + (y - 99));
       }
       y++;
     }
   }
 
   private boolean pulled(long x, long y) {
-    if (x < 0 || y < 0) {
-      return false;
-    }
     return _memo.computeIfAbsent(new Point(x, y), s -> {
       var input = List.of(x, y).iterator();
       var output = new AtomicLong();
