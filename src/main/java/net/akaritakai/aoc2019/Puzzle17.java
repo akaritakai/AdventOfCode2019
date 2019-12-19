@@ -256,8 +256,7 @@ public class Puzzle17 extends AbstractPuzzle {
     private static int serializedSize(List<String> input) {
       var tokensSize = input.stream().mapToInt(String::length).sum();
       var commasSize = Ints.constrainToRange(input.size() - 1, 0, Integer.MAX_VALUE);
-      var newLineSize = 1;
-      return tokensSize + commasSize + newLineSize;
+      return tokensSize + commasSize;
     }
   }
 }
