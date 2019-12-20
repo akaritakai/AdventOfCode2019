@@ -2,11 +2,11 @@ package net.akaritakai.aoc2019;
 
 import net.akaritakai.aoc2019.geom2d.Point;
 import net.akaritakai.aoc2019.geom2d.Point3D;
+import net.akaritakai.aoc2019.graph.GraphBuilder;
 import net.akaritakai.aoc2019.graph.InfiniteUndirectedGraph;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.shortestpath.BidirectionalDijkstraShortestPath;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DefaultUndirectedGraph;
+import org.jgrapht.graph.DefaultWeightedEdge;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,7 +40,7 @@ public class Puzzle20 extends AbstractPuzzle {
   private static class Maze2D {
     private final Point _start;
     private final Point _end;
-    private final Graph<Point, DefaultEdge> _graph;
+    private final Graph<Point, DefaultWeightedEdge> _graph;
 
     private Maze2D(String input) {
       var grid = getRawGrid(input);
@@ -59,7 +59,7 @@ public class Puzzle20 extends AbstractPuzzle {
         portals.put(point2, point1);
       });
 
-      _graph = buildGraph(tunnels, portals);
+      _graph = GraphBuilder.buildUndirectedGraph(tunnels, point -> adjacentPoints(tunnels, portals, point));
     }
 
     private long getShortestPathLength() {
@@ -74,19 +74,6 @@ public class Puzzle20 extends AbstractPuzzle {
       var portal = portals.get(point);
       if (portal != null) adjacent.add(portal);
       return adjacent;
-    }
-
-    private static Graph<Point, DefaultEdge> buildGraph(Set<Point> tunnels, Map<Point, Point> portals) {
-      var graph = new DefaultUndirectedGraph<Point, DefaultEdge>(DefaultEdge.class);
-      // Add all vertices
-      tunnels.forEach(graph::addVertex);
-      // Add all edges
-      tunnels.forEach(point -> {
-        adjacentPoints(tunnels, portals, point).forEach(adjacent -> {
-          graph.addEdge(point, adjacent);
-        });
-      });
-      return graph;
     }
   }
 
