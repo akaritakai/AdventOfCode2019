@@ -1,15 +1,16 @@
 package net.akaritakai.aoc2019;
 
-import net.akaritakai.aoc2019.geom2d.Direction;
 import net.akaritakai.aoc2019.geom2d.Point;
+import net.akaritakai.aoc2019.graph.GraphBuilder;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
-import org.jgrapht.graph.DefaultUndirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class Puzzle18 extends AbstractPuzzle {
 
@@ -81,17 +82,24 @@ public class Puzzle18 extends AbstractPuzzle {
             new Point(entrance.x + 1, entrance.y - 1),
             new Point(entrance.x + 1, entrance.y + 1));
         tunnels.remove(entrance);
-        tunnels.remove(Direction.NORTH.move(entrance));
-        tunnels.remove(Direction.SOUTH.move(entrance));
-        tunnels.remove(Direction.EAST.move(entrance));
-        tunnels.remove(Direction.WEST.move(entrance));
+        tunnels.removeAll(entrance.adjacentPoints());
       }
 
-      var irreducible = new HashSet<Point>();
-      irreducible.addAll(_entrances);
-      irreducible.addAll(_doorsAndKeys.doors);
-      irreducible.addAll(_doorsAndKeys.keys);
-      _graph = buildGraph(tunnels, irreducible);
+      var irreduciblePoints = new HashSet<Point>();
+      irreduciblePoints.addAll(_entrances);
+      irreduciblePoints.addAll(_doorsAndKeys.doors);
+      irreduciblePoints.addAll(_doorsAndKeys.keys);
+
+      Function<Point, Set<Point>> adjacentPoints = point -> point.adjacentPoints()
+          .stream()
+          .filter(tunnels::contains)
+          .collect(Collectors.toSet());
+      _graph = GraphBuilder.buildUndirectedGraph(tunnels, adjacentPoints);
+
+      // The idea of reducing the graph (removing vertices of degree 2 and combining their edges into a single weighted
+      // edge) comes from /u/kroppeb
+      // https://www.reddit.com/r/adventofcode/comments/ec8090/2019_day_18_solutions/fb9wkit/
+      GraphBuilder.reduceGraph(_graph, irreduciblePoints);
     }
 
     private long minKeyCollectionPathLength() {
@@ -178,7 +186,7 @@ public class Puzzle18 extends AbstractPuzzle {
         return _memoizedGraphs.get(remainingKeys);
       }
 
-      var graph = copyGraph(_graph);
+      var graph = GraphBuilder.copyGraph(_graph);
       var closedDoors = _doorsAndKeys.closedDoors(remainingKeys);
       for (Point door : closedDoors) {
         graph.removeVertex(door);
@@ -187,114 +195,6 @@ public class Puzzle18 extends AbstractPuzzle {
       _memoizedGraphs.put(remainingKeys, graph);
 
       return graph;
-    }
-
-    private static Graph<Point, DefaultWeightedEdge> copyGraph(Graph<Point, DefaultWeightedEdge> graph) {
-      var newGraph = new DefaultUndirectedWeightedGraph<Point, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-      for (var vertex : graph.vertexSet()) {
-        for (var edge : graph.edgesOf(vertex)) {
-          var source = graph.getEdgeSource(edge);
-          var target = graph.getEdgeTarget(edge);
-          var weight = graph.getEdgeWeight(edge);
-
-          newGraph.addVertex(source);
-          newGraph.addVertex(target);
-          var newEdge = newGraph.addEdge(source, target);
-          if (newEdge != null) {
-            newGraph.setEdgeWeight(newEdge, weight);
-          }
-        }
-      }
-      return newGraph;
-    }
-
-    private static Graph<Point, DefaultWeightedEdge> buildGraph(Set<Point> tunnels, Set<Point> irreducibleVertices) {
-      var graph = new DefaultUndirectedWeightedGraph<Point, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-      // Add all vertices
-      tunnels.forEach(graph::addVertex);
-      // Add all edges
-      tunnels.forEach(point -> {
-        adjacentPoints(tunnels, point).forEach(adjacent -> {
-          var edge = graph.addEdge(point, adjacent);
-          if (edge != null) {
-            graph.setEdgeWeight(edge, 1);
-          }
-        });
-      });
-      reduceGraph(graph, irreducibleVertices);
-      return graph;
-    }
-
-    private static void reduceGraph(Graph<Point, DefaultWeightedEdge> graph, Set<Point> irreducibleVertices) {
-      // The idea of reducing the graph (removing vertices of degree 2 and combining their edges into a single weighted
-      // edge) comes from /u/kroppeb
-      // https://www.reddit.com/r/adventofcode/comments/ec8090/2019_day_18_solutions/fb9wkit/
-
-      var modified = true;
-      while (modified) {
-        modified = false;
-        for (var vertex : new HashSet<>(graph.vertexSet())) {
-          if (!graph.containsVertex(vertex)) {
-            continue; // This point was reduced already
-          }
-          if (irreducibleVertices.contains(vertex)) {
-            continue; // This vertex cannot be reduced
-          }
-          modified |= reduceVertex(graph, vertex);
-        }
-      }
-    }
-
-    private static boolean reduceVertex(Graph<Point, DefaultWeightedEdge> graph, Point vertex) {
-      if (graph.degreeOf(vertex) == 2) {
-        // Vertex degree 2 and can be reduced i.e.
-        //     x <---m---> y <---n---> z
-        // can be reduced to
-        //     x <---m+n---> z
-
-        // Perform the replacement
-        var weight = 0; // Weight of our new edge
-        Point vertex1 = null; // Source of our new edge
-        Point vertex2 = null; // Target of our new edge
-        for (var edge : graph.edgesOf(vertex)) {
-          // Add the edge we're removing to the weight of our new edge
-          weight += graph.getEdgeWeight(edge);
-
-          // Find the vertex in the edge that isn't the one we're removing and bubble it up
-          var edgeVertex = graph.getEdgeSource(edge);
-          if (edgeVertex.equals(vertex)) {
-            edgeVertex = graph.getEdgeTarget(edge);
-          }
-          if (vertex1 == null) {
-            vertex1 = edgeVertex;
-          } else {
-            vertex2 = edgeVertex;
-          }
-        }
-
-        // Remove the reduced vertex and edges
-        graph.removeVertex(vertex);
-
-        // Create the new edge
-        var edge = graph.addEdge(vertex1, vertex2);
-        graph.setEdgeWeight(edge, weight);
-
-        return true;
-      }
-      return false;
-    }
-
-    private static Set<Point> adjacentPoints(Set<Point> tunnels, Point point) {
-      var points = new HashSet<Point>();
-      var p = Direction.NORTH.move(point);
-      if (tunnels.contains(p)) points.add(p);
-      p = Direction.SOUTH.move(point);
-      if (tunnels.contains(p)) points.add(p);
-      p = Direction.EAST.move(point);
-      if (tunnels.contains(p)) points.add(p);
-      p = Direction.WEST.move(point);
-      if (tunnels.contains(p)) points.add(p);
-      return points;
     }
   }
 

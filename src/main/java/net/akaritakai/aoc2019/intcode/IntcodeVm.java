@@ -118,28 +118,31 @@ public class IntcodeVm {
   }
 
   private enum OpCode {
-    ADD (1),
-    MULTIPLY (2),
-    INPUT (3),
-    OUTPUT (4),
-    JUMP_IF_TRUE (5),
-    JUMP_IF_FALSE (6),
-    LESS_THAN (7),
-    EQUALS (8),
-    ADJUST_RELATIVE_BASE (9),
-    HALT (99);
-
-    private final long _code;
-
-    OpCode(long code) {
-      _code = code;
-    }
+    ADD,
+    MULTIPLY,
+    INPUT,
+    OUTPUT,
+    JUMP_IF_TRUE ,
+    JUMP_IF_FALSE,
+    LESS_THAN,
+    EQUALS,
+    ADJUST_RELATIVE_BASE,
+    HALT;
 
     private static OpCode of(long code) {
-      return Arrays.stream(OpCode.values())
-          .filter(opcode -> opcode._code == code)
-          .findAny()
-          .orElseThrow(() -> new UnsupportedOperationException("Unknown opcode: " + code));
+      switch (Math.toIntExact(code)) {
+        case 1: return ADD;
+        case 2: return MULTIPLY;
+        case 3: return INPUT;
+        case 4: return OUTPUT;
+        case 5: return JUMP_IF_TRUE;
+        case 6: return JUMP_IF_FALSE;
+        case 7: return LESS_THAN;
+        case 8: return EQUALS;
+        case 9: return ADJUST_RELATIVE_BASE;
+        case 99: return HALT;
+      }
+      throw new UnsupportedOperationException("Unknown opcode: " + code);
     }
   }
 
@@ -159,10 +162,12 @@ public class IntcodeVm {
     }
 
     private static Mode of(long code) {
-      return Arrays.stream(Mode.values())
-          .filter(mode -> mode._code == code)
-          .findAny()
-          .orElseThrow(() -> new UnsupportedOperationException("Unknown mode: " + code));
+      switch (Math.toIntExact(code)) {
+        case 0: return POSITION;
+        case 1: return IMMEDIATE;
+        case 2: return RELATIVE;
+      }
+      throw new UnsupportedOperationException("Unknown mode: " + code);
     }
   }
 

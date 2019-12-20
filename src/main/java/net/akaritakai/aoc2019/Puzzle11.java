@@ -111,21 +111,23 @@ public class Puzzle11 extends AbstractPuzzle {
 
     static final Color DEFAULT = BLACK;
 
-    private final long _value;
+    private final long value;
 
     Color(long value) {
-      _value = value;
+      this.value = value;
     }
 
     long getValue() {
-      return _value;
+      return value;
     }
 
     private static Color of(long value) {
-      return Arrays.stream(Color.values())
-          .filter(color -> color.getValue() == value)
-          .findAny()
-          .orElseThrow(()  -> new IllegalArgumentException("Unknown color value: " + value));
+      for (Color color : Color.values()) {
+        if (value == color.value) {
+          return color;
+        }
+      }
+      throw new IllegalArgumentException("Unknown color value: " + value);
     }
   }
 

@@ -7,8 +7,8 @@ import net.akaritakai.aoc2019.intcode.IntcodeVm;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
-import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultUndirectedGraph;
 
 import java.io.Closeable;
 import java.util.*;
@@ -93,7 +93,7 @@ public class Puzzle15 extends AbstractPuzzle {
 
   @VisibleForTesting
   static class ShipState {
-    private final Graph<Point, DefaultEdge> _ship = new DefaultDirectedGraph<>(DefaultEdge.class);
+    private final Graph<Point, DefaultEdge> _ship = new DefaultUndirectedGraph<>(DefaultEdge.class);
     private final Stack<Point> _stack = new Stack<>();
     private final Set<Point> _visited = new HashSet<>();
     private final DroidState _droid;
@@ -102,10 +102,7 @@ public class Puzzle15 extends AbstractPuzzle {
     ShipState(DroidState droid) {
       _droid = droid;
       _ship.addVertex(droid.getLocation());
-      _stack.push(Direction.NORTH.move(droid.getLocation()));
-      _stack.push(Direction.SOUTH.move(droid.getLocation()));
-      _stack.push(Direction.EAST.move(droid.getLocation()));
-      _stack.push(Direction.WEST.move(droid.getLocation()));
+      _stack.addAll(droid.getLocation().adjacentPoints());
     }
 
     private synchronized void exploreShip() {
@@ -134,7 +131,6 @@ public class Puzzle15 extends AbstractPuzzle {
 
         // Place the node into our graph
         _ship.addVertex(_droid.getLocation());
-        _ship.addEdge(previousLocation, _droid.getLocation());
         _ship.addEdge(_droid.getLocation(), previousLocation);
 
         // Mark the oxygen system if we've found it
@@ -206,21 +202,17 @@ public class Puzzle15 extends AbstractPuzzle {
 
 
   enum State {
-    WALL(0),
-    EMPTY(1),
-    OXYGEN_SYSTEM(2);
-
-    private final long value;
-
-    State(int value) {
-      this.value = value;
-    }
+    WALL,
+    EMPTY,
+    OXYGEN_SYSTEM;
 
     private static State of(long value) {
-      return Arrays.stream(State.values())
-          .filter(state -> state.value == value)
-          .findAny()
-          .orElseThrow(() -> new IllegalArgumentException("Unknown state value: " + value));
+      switch (Math.toIntExact(value)) {
+        case 0: return WALL;
+        case 1: return EMPTY;
+        case 2: return OXYGEN_SYSTEM;
+      }
+      throw new IllegalArgumentException("Unknown state value: " + value);
     }
   }
 

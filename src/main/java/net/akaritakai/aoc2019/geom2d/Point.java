@@ -1,6 +1,8 @@
 package net.akaritakai.aoc2019.geom2d;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class Point {
   public final long x;
@@ -14,6 +16,15 @@ public class Point {
   public Point(int x, int y) {
     this.x = x;
     this.y = y;
+  }
+
+  public Set<Point> adjacentPoints() {
+    var adjacent = new HashSet<Point>();
+    adjacent.add(new Point(x, y - 1));
+    adjacent.add(new Point(x, y + 1));
+    adjacent.add(new Point(x - 1, y));
+    adjacent.add(new Point(x + 1, y));
+    return adjacent;
   }
 
   @Override

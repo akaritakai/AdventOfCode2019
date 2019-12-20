@@ -1,7 +1,7 @@
 package net.akaritakai.aoc2019;
 
-import java.awt.*;
-import java.util.List;
+import net.akaritakai.aoc2019.geom2d.Point;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;

@@ -1,11 +1,10 @@
 package net.akaritakai.aoc2019;
 
 import com.google.common.annotations.VisibleForTesting;
+import net.akaritakai.aoc2019.geom2d.Point;
 import net.akaritakai.aoc2019.intcode.IntcodeVm;
 
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -94,23 +93,21 @@ public class Puzzle13 extends AbstractPuzzle {
 
   @VisibleForTesting
   enum TileType {
-    EMPTY (0),
-    WALL (1),
-    BLOCK (2),
-    HORIZONTAL_PADDLE (3),
-    BALL (4);
-
-    private final long id;
-
-    TileType(long id) {
-      this.id = id;
-    }
+    EMPTY,
+    WALL,
+    BLOCK,
+    HORIZONTAL_PADDLE,
+    BALL;
 
     private static TileType of(long id) {
-      return Arrays.stream(TileType.values())
-          .filter(color -> color.id == id)
-          .findAny()
-          .orElse(null);
+      switch (Math.toIntExact(id)) {
+        case 0: return EMPTY;
+        case 1: return WALL;
+        case 2: return BLOCK;
+        case 3: return HORIZONTAL_PADDLE;
+        case 4: return BALL;
+      }
+      return null;
     }
   }
 }
