@@ -1,5 +1,6 @@
 package net.akaritakai.aoc2019;
 
+import com.google.common.collect.Sets;
 import net.akaritakai.aoc2019.geom2d.Point;
 import net.akaritakai.aoc2019.geom2d.Point3D;
 import net.akaritakai.aoc2019.graph.GraphBuilder;
@@ -60,10 +61,11 @@ public class Puzzle20 extends AbstractPuzzle {
       });
 
       _graph = GraphBuilder.buildUndirectedGraph(tunnels, point -> adjacentPoints(tunnels, portals, point));
+      GraphBuilder.reduceGraph(_graph, Sets.union(portals.keySet(), Set.of(_start, _end)));
     }
 
     private long getShortestPathLength() {
-      return new BidirectionalDijkstraShortestPath<>(_graph).getPath(_start, _end).getLength();
+      return (long) new BidirectionalDijkstraShortestPath<>(_graph).getPath(_start, _end).getWeight();
     }
 
     private static Set<Point> adjacentPoints(Set<Point> tunnels, Map<Point, Point> portals, Point point) {
