@@ -317,6 +317,7 @@ public class Puzzle20 extends AbstractPuzzle {
    * Returns the puzzle output as a 2D array of length-1 strings in the (x,y) plane
    */
   private static String[][] getRawGrid(String input) {
+    input = input.replace("\r\n", "\n");
     var lines = input.lines().collect(Collectors.toList());
     var height = lines.size();
     var width = lines.get(0).length();
