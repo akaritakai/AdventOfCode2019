@@ -41,6 +41,11 @@ where `${DAY}` is the day number of the puzzle.
 As an example, Day 1's input is at https://adventofcode.com/2019/day/1/input,
 Day 2's input is at https://adventofcode.com/2019/day/2/input, etc.
 
+## Docker Instructions (Mac/Linux)
+
+1. Follow the instructions above for providing your puzzle input.
+2. Run `docker run --rm -it $(docker build -q .)`
+
 ## Windows Instructions
 
 1. Follow the instructions above for providing your puzzle input. 
@@ -63,5 +68,3 @@ Day 2's input is at https://adventofcode.com/2019/day/2/input, etc.
    Alternatively, you may want to search on Google for installation instructions specific to your distro.
 3. Open a shell and navigate to the project directory.
 4. Run `./gradlew run`
-
-
