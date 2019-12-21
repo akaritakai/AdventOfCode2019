@@ -1,4 +1,4 @@
-package net.akaritakai.aoc2019.geom2d;
+package net.akaritakai.aoc2019.geom3d;
 
 import java.util.Objects;
 

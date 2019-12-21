@@ -2,7 +2,7 @@ package net.akaritakai.aoc2019;
 
 import com.google.common.collect.Sets;
 import net.akaritakai.aoc2019.geom2d.Point;
-import net.akaritakai.aoc2019.geom2d.Point3D;
+import net.akaritakai.aoc2019.geom3d.Point3D;
 import net.akaritakai.aoc2019.graph.GraphBuilder;
 import net.akaritakai.aoc2019.graph.InfiniteUndirectedGraph;
 import org.jgrapht.Graph;
