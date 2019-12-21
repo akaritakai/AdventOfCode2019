@@ -151,15 +151,9 @@ public class IntcodeVm {
   }
 
   private enum Mode {
-    POSITION (0),
-    IMMEDIATE (1),
-    RELATIVE (2);
-
-    private final long _code;
-
-    Mode(long code) {
-      _code = code;
-    }
+    POSITION,
+    IMMEDIATE,
+    RELATIVE;
 
     private static Mode of(long code) {
       switch (Math.toIntExact(code)) {
