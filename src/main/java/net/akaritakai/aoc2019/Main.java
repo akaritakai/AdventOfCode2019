@@ -9,6 +9,7 @@ public class Main {
       new Puzzle02(PUZZLE_INPUT_FETCHER.getPuzzleInput(2)),
       new Puzzle03(PUZZLE_INPUT_FETCHER.getPuzzleInput(3)),
       new Puzzle04(PUZZLE_INPUT_FETCHER.getPuzzleInput(4)),
+      new Puzzle04(PUZZLE_INPUT_FETCHER.getPuzzleInput(4)),
       new Puzzle05(PUZZLE_INPUT_FETCHER.getPuzzleInput(5)),
       new Puzzle06(PUZZLE_INPUT_FETCHER.getPuzzleInput(6)),
       new Puzzle07(PUZZLE_INPUT_FETCHER.getPuzzleInput(7)),
@@ -25,7 +26,8 @@ public class Main {
       new Puzzle18(PUZZLE_INPUT_FETCHER.getPuzzleInput(18)),
       new Puzzle19(PUZZLE_INPUT_FETCHER.getPuzzleInput(19)),
       new Puzzle20(PUZZLE_INPUT_FETCHER.getPuzzleInput(20)),
-      new Puzzle21(PUZZLE_INPUT_FETCHER.getPuzzleInput(21))
+      new Puzzle21(PUZZLE_INPUT_FETCHER.getPuzzleInput(21)),
+      new Puzzle22(PUZZLE_INPUT_FETCHER.getPuzzleInput(22))
   );
 
   public static void main(String[] args) {
