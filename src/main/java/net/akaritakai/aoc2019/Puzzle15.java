@@ -59,14 +59,11 @@ public class Puzzle15 extends AbstractPuzzle {
     private final BlockingQueue<Long> _input = new LinkedBlockingQueue<>();
     private final BlockingQueue<Long> _output = new LinkedBlockingQueue<>();
     private Point _location = STARTING_POSITION;
-    private Thread _vmThread;
+    private IntcodeVm _vm;
 
     public DroidStateImpl(String puzzleInput) {
-      _vmThread = new Thread(() -> {
-        var vm = new IntcodeVm(puzzleInput, sneaked(_input::take), _output::add);
-        vm.run();
-      });
-      _vmThread.start();
+      _vm = new IntcodeVm(puzzleInput, sneaked(_input::take), _output::add);
+      new Thread(_vm::run).start();
     }
 
     public State move(Direction direction) {
@@ -84,9 +81,9 @@ public class Puzzle15 extends AbstractPuzzle {
 
     @Override
     public synchronized void close() {
-      if (_vmThread != null) {
-        _vmThread.interrupt();
-        _vmThread = null;
+      if (_vm != null) {
+        _vm.halt();
+        _vm = null;
       }
     }
   }

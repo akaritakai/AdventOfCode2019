@@ -24,6 +24,8 @@ public class IntcodeVm {
   private long _ip = 0;
   private long _base = 0;
 
+  private volatile boolean _shutdown = false;
+
   /**
    * Constructor which accepts the program to run.
    */
@@ -45,7 +47,7 @@ public class IntcodeVm {
    */
   public void run() {
     try {
-      while (true) {
+      while (!_shutdown) {
         switch (opcode()) {
           case ADD: {
             _memory.put(param(3).address, param(1).value + param(2).value);
@@ -107,6 +109,10 @@ public class IntcodeVm {
     return _memory;
   }
 
+  public void halt() {
+    _shutdown = true;
+  }
+
   @VisibleForTesting
   static Map<Long, Long> programMemory(String program) {
     Map<Long, Long> memory = new ConcurrentHashMap<>();
@@ -122,7 +128,7 @@ public class IntcodeVm {
     MULTIPLY,
     INPUT,
     OUTPUT,
-    JUMP_IF_TRUE ,
+    JUMP_IF_TRUE,
     JUMP_IF_FALSE,
     LESS_THAN,
     EQUALS,
