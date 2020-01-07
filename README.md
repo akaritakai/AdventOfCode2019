@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/akaritakai/AdventOfCode2019.svg)](https://travis-ci.org/akaritakai/AdventOfCode2019)
 [![Code Coverage](https://img.shields.io/codecov/c/github/akaritakai/AdventOfCode2019.svg)](https://codecov.io/gh/akaritakai/AdventOfCode2019)
 
-This repo contains my Advent Of Code 2019 solutions in Java 13.
+This repo contains my Advent Of Code 2019 solutions in Java 13. It covers all 25 days of puzzles.
 
 ## Providing Your Puzzle Input
 
