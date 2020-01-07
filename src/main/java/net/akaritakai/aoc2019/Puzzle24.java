@@ -1,9 +1,11 @@
 package net.akaritakai.aoc2019;
 
+import com.google.common.annotations.VisibleForTesting;
 import net.akaritakai.aoc2019.geom2d.Point;
 import net.akaritakai.aoc2019.geom3d.Point3D;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,10 +39,11 @@ public class Puzzle24 extends AbstractPuzzle {
     return String.valueOf(eris.bugs.size());
   }
 
-  private static class SimpleEris {
-    private Set<Point> bugs = new HashSet<>();
+  @VisibleForTesting
+  static class SimpleEris {
+    Set<Point> bugs = new HashSet<>();
 
-    private SimpleEris(String input) {
+    SimpleEris(String input) {
       var lines = input.lines().collect(Collectors.toList());
       for (var y = 0; y < 5; y++) {
         var line = lines.get(y);
@@ -52,7 +55,7 @@ public class Puzzle24 extends AbstractPuzzle {
       }
     }
 
-    private void evolve() {
+    void evolve() {
       var newBugs = new HashSet<Point>();
       for (var x = 0; x < 5; x++) {
         for (var y = 0; y < 5; y++) {
@@ -67,14 +70,14 @@ public class Puzzle24 extends AbstractPuzzle {
       bugs = newBugs;
     }
 
-    private long bugCount(Point position) {
+    long bugCount(Point position) {
       return position.adjacentPoints()
           .stream()
           .filter(p -> bugs.contains(p))
           .count();
     }
 
-    private long biodiversityRating() {
+    long biodiversityRating() {
       var i = 0;
       long rating = 0;
       for (var y = 0; y < 5; y++) {
@@ -87,12 +90,26 @@ public class Puzzle24 extends AbstractPuzzle {
       }
       return rating;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      SimpleEris that = (SimpleEris) o;
+      return Objects.equals(bugs, that.bugs);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(bugs);
+    }
   }
 
-  private static class ComplexEris {
-    private Set<Point3D> bugs = new HashSet<>();
+  @VisibleForTesting
+  static class ComplexEris {
+    Set<Point3D> bugs = new HashSet<>();
 
-    private ComplexEris(String input) {
+    ComplexEris(String input) {
       var lines = input.lines().collect(Collectors.toList());
       for (var y = 0; y < 5; y++) {
         var line = lines.get(y);
@@ -104,8 +121,8 @@ public class Puzzle24 extends AbstractPuzzle {
       }
     }
 
-    private Set<Point3D> adjacent(Point3D point) {
-      Set<Point3D> points = new HashSet<>();
+    Set<Point3D> adjacent(Point3D point) {
+      var points = new HashSet<Point3D>();
 
       // Add points on the same level
       points.add(new Point3D(point.x - 1, point.y, point.z));
@@ -170,7 +187,7 @@ public class Puzzle24 extends AbstractPuzzle {
       return points;
     }
 
-    private void evolve() {
+    void evolve() {
       var newBugs = new HashSet<Point3D>();
       var minZ = bugs.stream().mapToLong(p -> p.z).min().orElse(0) - 1;
       var maxZ = bugs.stream().mapToLong(p -> p.z).max().orElse(0) + 1;
@@ -192,10 +209,23 @@ public class Puzzle24 extends AbstractPuzzle {
       bugs = newBugs;
     }
 
-    private long bugCount(Point3D position) {
+    long bugCount(Point3D position) {
       return adjacent(position).stream()
           .filter(p -> bugs.contains(p))
           .count();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ComplexEris that = (ComplexEris) o;
+      return Objects.equals(bugs, that.bugs);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(bugs);
     }
   }
 }

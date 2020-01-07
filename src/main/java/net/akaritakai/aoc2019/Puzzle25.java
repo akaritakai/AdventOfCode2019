@@ -29,8 +29,8 @@ public class Puzzle25 extends AbstractPuzzle {
 
   @Override
   public String solvePart1() {
-    Droid droid = new Droid(getPuzzleInput());
-    Ship ship = new Ship(droid);
+    var droid = new Droid(getPuzzleInput());
+    var ship = new Ship(droid);
     return ship.securityToken();
   }
 
@@ -64,7 +64,7 @@ public class Puzzle25 extends AbstractPuzzle {
       // Visit first room
       var room = droid.room();
       layout.addVertex(room);
-      for (Direction direction : room.doors) {
+      for (var direction : room.doors) {
         stack.add(new Door(room, direction));
       }
 
@@ -79,13 +79,13 @@ public class Puzzle25 extends AbstractPuzzle {
         }
 
         // Send the droid through the door
-        for (Direction direction : getDirections(door)) {
+        for (var direction : getDirections(door)) {
           droid.command(direction.name().toLowerCase());
         }
 
         // Add our room to the graph and pick up all items in the room (visit it)
         room = droid.room();
-        for (String item : room.items) {
+        for (var item : room.items) {
           if (restrictedItems.contains(item)) {
             continue; // Taking restricted items has undesirable consequences
           }
@@ -105,7 +105,7 @@ public class Puzzle25 extends AbstractPuzzle {
         layout.addEdge(door.room, room, new DoorEdge(door.direction));
 
         // Add the next doors to explore
-        for (Direction direction : room.doors) {
+        for (var direction : room.doors) {
           stack.add(new Door(room, direction));
         }
       }
@@ -119,15 +119,15 @@ public class Puzzle25 extends AbstractPuzzle {
 
         // Try all combinations of elements
         boolean foundCombination = false;
-        for (int size = items.size() - 1; !foundCombination; size--) {
+        for (var size = items.size() - 1; !foundCombination; size--) {
           for (Set<String> combination : Sets.combinations(items, size)) {
             //System.out.println("TRYING: " + combination);
             // Set our inventory to be the combination
-            for (String drop : new HashSet<>(Sets.difference(inventory, combination))) {
+            for (var drop : new HashSet<>(Sets.difference(inventory, combination))) {
               droid.command("drop " + drop);
               inventory.remove(drop);
             }
-            for (String pickUp : new HashSet<>(Sets.difference(combination, inventory))) {
+            for (var pickUp : new HashSet<>(Sets.difference(combination, inventory))) {
               droid.command("take " + pickUp);
               inventory.add(pickUp);
             }
@@ -225,10 +225,10 @@ public class Puzzle25 extends AbstractPuzzle {
 
     private static Set<Direction> findDoors(List<String> lines) {
       var doors = new HashSet<Direction>();
-      for (int i = 2; i < lines.size(); i++) {
+      for (var i = 2; i < lines.size(); i++) {
         var line = lines.get(i);
         if (line.equals("Doors here lead:")) {
-          for (int j = i + 1; j < lines.size(); j++) {
+          for (var j = i + 1; j < lines.size(); j++) {
             line = lines.get(j);
             if (line.startsWith("- ")) {
               var direction = line.substring(2);
@@ -259,7 +259,7 @@ public class Puzzle25 extends AbstractPuzzle {
 
     private static Set<String> findItems(List<String> lines) {
       var items = new HashSet<String>();
-      for (int i = 2; i < lines.size(); i++) {
+      for (var i = 2; i < lines.size(); i++) {
         var line = lines.get(i);
         if (line.equals("Items here:")) {
           for (int j = i + 1; j < lines.size(); j++) {
