@@ -42,10 +42,11 @@ public class Puzzle15 extends AbstractPuzzle {
   }
 
   private ShipState exploreShip() {
-    var droid = new DroidStateImpl(getPuzzleInput());
-    var ship = new ShipState(droid);
-    ship.exploreShip();
-    return ship;
+    try (var droid = new DroidStateImpl(getPuzzleInput())) {
+      var ship = new ShipState(droid);
+      ship.exploreShip();
+      return ship;
+    }
   }
 
   @VisibleForTesting
@@ -58,12 +59,14 @@ public class Puzzle15 extends AbstractPuzzle {
   private static class DroidStateImpl implements DroidState {
     private final BlockingQueue<Long> _input = new LinkedBlockingQueue<>();
     private final BlockingQueue<Long> _output = new LinkedBlockingQueue<>();
+    private final IntcodeVm _vm;
+    private final Thread _vmThread;
     private Point _location = STARTING_POSITION;
-    private IntcodeVm _vm;
 
     public DroidStateImpl(String puzzleInput) {
       _vm = new IntcodeVm(puzzleInput, sneaked(_input::take), _output::add);
-      new Thread(_vm::run).start();
+      _vmThread = new Thread(_vm::run);
+      _vmThread.start();
     }
 
     public State move(Direction direction) {
@@ -83,7 +86,7 @@ public class Puzzle15 extends AbstractPuzzle {
     public synchronized void close() {
       if (_vm != null) {
         _vm.halt();
-        _vm = null;
+        _vmThread.interrupt();
       }
     }
   }
