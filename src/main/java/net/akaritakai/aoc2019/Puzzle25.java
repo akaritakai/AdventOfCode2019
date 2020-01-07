@@ -121,7 +121,6 @@ public class Puzzle25 extends AbstractPuzzle {
         boolean foundCombination = false;
         for (var size = items.size() - 1; !foundCombination; size--) {
           for (Set<String> combination : Sets.combinations(items, size)) {
-            //System.out.println("TRYING: " + combination);
             // Set our inventory to be the combination
             for (var drop : new HashSet<>(Sets.difference(inventory, combination))) {
               droid.command("drop " + drop);
